@@ -1,0 +1,37 @@
+/* General settings */
+
+*
+{
+    margin: 0px;
+    padding: 0px;
+}
+
+.wrapper
+{
+    
+}
+
+/* Header Styles */
+
+.topheader
+{
+    display: flex;
+    justify-content: space-between;
+    background-color: black;
+    color: silver;
+    padding: 15px 5%;
+}
+
+.bottomheader
+{
+    display: flex;
+    justify-content: space-between;
+    background-color: silver;
+    color: black;
+    padding: 15px 5%;
+}
+
+.userheaderinfo img
+{
+    padding: 0px 15px;
+}
