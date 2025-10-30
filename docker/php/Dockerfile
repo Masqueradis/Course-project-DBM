@@ -1,8 +1,8 @@
 FROM php:8.4-fpm AS base
 
 RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libicu-dev libpng-dev \
-    && docker-php-ext-install intl gd zip \
+    git unzip libzip-dev libicu-dev libpng-dev default-mysql-client \
+    && docker-php-ext-install intl gd zip pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pecl install xdebug \
