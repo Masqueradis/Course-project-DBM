@@ -17,8 +17,8 @@
     </div>
     <div class="bottomfooter">
         <div>
-            <img src="../../image/Twitter.png">
-            <img src="../../image/instagram.png">
+            <a href="https://x.com/masqueradiss"><img src="../../image/Twitter.png"></a>
+            <a href="https://www.instagram.com/masqueradiss/?next=%2Fflowe_rse%2F"><img src="../../image/instagram.png"></a>
         </div>
         <div>
             Copyright © 2025 CoolCompany Inc.
