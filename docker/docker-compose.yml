@@ -25,6 +25,15 @@ services:
     networks:
       - ${PROJECT_NAME}
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: "${PROJECT_NAME}_mailhog"
+    ports:
+      - "${SMTP_PORT}:1025"
+      - "${MAIL_PORT}:8025"
+    networks:
+      - ${PROJECT_NAME}
+      
   mysql:
     image: mysql:8.0
     container_name: ${PROJECT_NAME}_mysql
@@ -55,7 +64,7 @@ services:
       - ${PROJECT_NAME}
 
 networks:
-  sandbox:
+  DBMS:
     driver: bridge
 
 volumes:

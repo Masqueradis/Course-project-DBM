@@ -24,3 +24,18 @@ ps:
 
 shell:
 	$(DOCKER_COMPOSE) exec php bash
+
+install:
+	$(DOCKER_COMPOSE) exec php composer install
+
+update:
+	$(DOCKER_COMPOSE) exec php composer update
+
+stan:
+	$(DOCKER_COMPOSE) exec php composer stan -- --level $(LEVEL)
+	
+cs-fix:
+	$(DOCKER_COMPOSE) exec php composer cs-fix
+
+cs-check:
+	$(DOCKER_COMPOSE) exec php composer cs-check
