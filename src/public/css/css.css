@@ -8,8 +8,8 @@
 
 /* Header Styles */
 
-.topheader
-{
+/* Базовые стили для header */
+.topheader {
     display: flex;
     justify-content: space-between;
     background-color: #020202;
@@ -17,23 +17,62 @@
     padding: 15px 5%;
 }
 
-.topheader div
-{
+.topheader div {
     opacity: 50%;
 }
 
-.bottomheader
-{
+.bottomheader {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     border: thin solid #CACDD8;
     color: black;
     padding: 15px 5%;
 }
 
-.userheaderinfo img
-{
-    padding: 0px 15px;
+.bottomheader > div:not(.userheaderinfo) {
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.bottomheader > div:not(.userheaderinfo):hover {
+    color: #0156FF;
+}
+
+.userheaderinfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.auth-links {
+    display: flex;
+    gap: 10px;
+}
+
+.login-btn,
+.register-btn {
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.login-btn {
+    color: #0156FF;
+    border: 1px solid #0156FF;
+}
+
+.register-btn {
+    background-color: #0156FF;
+    color: white;
+}
+
+/* Гарантия что изображения не растягиваются */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
 
 /* Footer Styles */
@@ -82,4 +121,24 @@ footer
     color: #fff;
     border: #fff solid thin;
     border-radius: 3px;
+}
+
+/* Базовые стили для всех изображений */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Специфичные стили для иконок в header */
+.userheaderinfo img:not(.avatar-small) {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Логотип в header */
+.bottomheader > a > img {
+    max-width: 120px;
+    height: auto;
 }

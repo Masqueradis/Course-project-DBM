@@ -1,16 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Main page</title>
-    <link rel="stylesheet" href="css/css.css">
-</head>
-<body>
-    <div class="wrapper">
-        <?php require_once ("../App/blocks/header.php")?>
-        <?php require_once ("../App/blocks/footer.php")?>
-    </div>
-</body>
-</html>
+<?php
+// Включаем вывод ошибок для отладки
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
+// Получаем запрошенный путь
+$request_uri = $_SERVER['REQUEST_URI'];
+$path = parse_url($request_uri, PHP_URL_PATH);
+
+// Убираем начальный слэш
+$path = ltrim($path, '/');
+
+// Если путь пустой или корневой, показываем главную страницу
+if ($path === '' || $path === '/') {
+    // Подключаем конфигурацию и функции
+    require_once __DIR__ . '/../App/config/database.php';
+    require_once __DIR__ . '/../App/auth/functions.php';
+    
+    $user_info = isLoggedIn() ? getUserInfo() : null;
+    ?>
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Главная страница</title>
+        <link rel="stylesheet" href="/css/css.css">
+        <link rel="stylesheet" href="/css/auth.css">
+    </head>
+    <body>
+        <div class="wrapper">
+            <?php require_once __DIR__ . '/../App/blocks/header.php'; ?>
+            
+            <main style="padding: 40px 5%; min-height: 60vh;">
+                <h1>Добро пожаловать в магазин компьютерных комплектующих</h1>
+                <p>Лучшие компоненты для вашего ПК по доступным ценам</p>
+                
+                <?php if (!isLoggedIn()): ?>
+                    <div style="text-align: center; margin-top: 50px;">
+                        <h2>Начните покупки прямо сейчас!</h2>
+                        <div style="margin-top: 20px;">
+                            <a href="/register.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px; margin: 0 10px;">
+                                Зарегистрироваться
+                            </a>
+                            <a href="/login.php" style="display: inline-block; padding: 12px 30px; margin: 0 10px; color: #0156FF; border: 1px solid #0156FF; border-radius: 4px; text-decoration: none;">
+                                Войти
+                            </a>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div style="text-align: center; margin-top: 50px;">
+                        <h2>Добро пожаловать, <?= htmlspecialchars($user_info['first_name'] ?? 'Пользователь') ?>!</h2>
+                        <p>Ваш баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> руб.</p>
+                        <div style="margin-top: 20px;">
+                            <a href="/account.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px;">
+                                Перейти в личный кабинет
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </main>
+            
+            <?php require_once __DIR__ . '/../App/blocks/footer.php'; ?>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Для всех остальных маршрутов
+$full_path = __DIR__ . '/' . $path;
+
+if (file_exists($full_path) && is_file($full_path)) {
+    // Если файл существует в public, выполняем его
+    if (strpos($path, '.php') !== false) {
+        // Для PHP файлов выполняем их
+        require_once $full_path;
+    } else {
+        // Для статических файлов отдаем как есть
+        return false;
+    }
+} else {
+    // 404 ошибка
+    http_response_code(404);
+    echo "<h1>404 - Страница не найдена</h1>";
+    echo "<p>Запрошенная страница не существует: " . htmlspecialchars($path) . "</p>";
+    echo "<p>Полный путь: " . htmlspecialchars($full_path) . "</p>";
+}
+?>

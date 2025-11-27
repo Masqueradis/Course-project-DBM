@@ -2,18 +2,8 @@
     "require": {
         "phpmailer/phpmailer": "^6.8"
     },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.0",
-        "phpstan/phpstan": "^1.0"
-    },
-    "scripts": {
-        "cs-fix": "php-cs-fixer fix --allow-risky=yes App && php-cs-fixer fix --allow-risky=yes public",
-        "cs-check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes App && php-cs-fixer fix --dry-run --diff --allow-risky=yes public",
-        "stan": "phpstan analyse App public"
-    },
     "config": {
-        "allow-plugins": {
-            "friendsofphp/php-cs-fixer": true
-        }
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
     }
 }
