@@ -1,16 +1,60 @@
 <?php
+session_start();
 require_once __DIR__ . '/../config/database.php';
 
 $errors = [];
 $success = false;
 
-// Если email не в сессии, редиректим на регистрацию
+// Улучшенная проверка сессии
+if (isset($_SESSION['user_id'])) {
+    // Если пользователь уже авторизован, но не подтвержден
+    $user_id = $_SESSION['user_id'];
+    $stmt = $pdo->prepare("SELECT email, is_verified FROM Users WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $user = $stmt->fetch();
+    
+    if ($user && !$user['is_verified']) {
+        $_SESSION['verification_email'] = $user['email'];
+    }
+}
+
+// Если email не в сессии, проверяем параметр GET или редиректим
 if (!isset($_SESSION['verification_email'])) {
-    header("Location: register.php");
-    exit;
+    if (isset($_GET['email'])) {
+        // Проверяем существование пользователя
+        $email = $_GET['email'];
+        $stmt = $pdo->prepare("SELECT user_id, is_verified FROM Users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        
+        if ($user && !$user['is_verified']) {
+            $_SESSION['verification_email'] = $email;
+        } else {
+            header("Location: /entrypoint/register.php");
+            exit;
+        }
+    } else {
+        header("Location: /entrypoint/register.php");
+        exit;
+    }
 }
 
 $email = $_SESSION['verification_email'];
+
+// Проверяем, не подтвержден ли уже email
+$stmt = $pdo->prepare("SELECT is_verified FROM Users WHERE email = ?");
+$stmt->execute([$email]);
+$user = $stmt->fetch();
+
+if ($user && $user['is_verified']) {
+    // Если уже подтвержден, редиректим в аккаунт
+    if (isset($_SESSION['user_id'])) {
+        header("Location: /account.php");
+    } else {
+        header("Location: /entrypoint/login.php");
+    }
+    exit;
+}
 
 // Повторная отправка кода
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) {
@@ -19,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) {
     
     $stmt = $pdo->prepare("UPDATE Users SET verification_code = ?, verification_code_expires = ? WHERE email = ?");
     if ($stmt->execute([$verification_code, $verification_expires, $email])) {
+        require_once __DIR__ . '/../config/database.php';
         $database = new Database();
         if ($database->sendVerificationEmail($email, $verification_code)) {
             $success = "Новый код подтверждения отправлен на вашу почту!";
@@ -48,16 +93,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                     // Активируем аккаунт
                     $stmt = $pdo->prepare("UPDATE Users SET is_verified = 1, verification_code = NULL, verification_code_expires = NULL WHERE user_id = ?");
                     if ($stmt->execute([$user['user_id']])) {
-                        // Автоматически логиним пользователя
-                        $_SESSION['user_id'] = $user['user_id'];
-                        $_SESSION['user_email'] = $email;
-                        $_SESSION['user_role'] = 'user';
-                        
-                        // Получаем имя пользователя для приветствия
-                        $stmt = $pdo->prepare("SELECT first_name FROM Users WHERE user_id = ?");
-                        $stmt->execute([$user['user_id']]);
-                        $user_data = $stmt->fetch();
-                        $_SESSION['first_name'] = $user_data['first_name'];
+                        // Устанавливаем сессию пользователя если ее нет
+                        if (!isset($_SESSION['user_id'])) {
+                            $_SESSION['user_id'] = $user['user_id'];
+                            
+                            // Получаем данные пользователя
+                            $stmt = $pdo->prepare("SELECT email, first_name, role FROM Users WHERE user_id = ?");
+                            $stmt->execute([$user['user_id']]);
+                            $user_data = $stmt->fetch();
+                            
+                            $_SESSION['user_email'] = $user_data['email'];
+                            $_SESSION['user_role'] = $user_data['role'];
+                            $_SESSION['first_name'] = $user_data['first_name'];
+                        }
                         
                         unset($_SESSION['verification_email']);
                         header("Location: /account.php");
@@ -115,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                     <small>Код из письма, отправленного на вашу почту</small>
                 </div>
 
-                <button type="submit" class="btn-primary">Подтвердить email</button>
+                <button type="submit" class="btn-primary" href="/entrypoint/account.php">Подтвердить email</button>
             </form>
 
             <form method="post" class="resend-form">
@@ -124,7 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
             </form>
 
             <div class="auth-links">
-                <a href="register.php">Вернуться к регистрации</a>
+                <a href="/entrypoint/register.php">Вернуться к регистрации</a> |
+                <a href="/entrypoint/login.php">Войти в аккаунт</a>
             </div>
         </div>
     </div>

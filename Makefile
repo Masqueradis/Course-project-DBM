@@ -1,7 +1,7 @@
-PROJECT_NAME=sandbox
+PROJECT_NAME=DBMS
 DOCKER_COMPOSE=docker compose -f docker/docker-compose.yml --env-file docker/.env
 
-.PHONY: up down restart build logs shell ps
+.PHONY: up down restart build logs shell ps install update stan cs-fix cs-check
 
 up:
 	$(DOCKER_COMPOSE) up -d

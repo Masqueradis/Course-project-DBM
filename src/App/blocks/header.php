@@ -15,7 +15,6 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Магазин компьютерных комплектующих</title>
     
-    <!-- Добавьте эти строки для favicon -->
     <link rel="icon" type="image/x-icon" href="/image/bottomheaderlogo.png">
     <link rel="shortcut icon" href="/image/bottomheaderlogo.png">
     <link rel="apple-touch-icon" href="/image/bottomheaderlogo.png">
@@ -56,18 +55,18 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
                     </div>
                     <span class="user-name"><?= htmlspecialchars($user_info['first_name'] ?? 'Пользователь') ?></span>
                     <div class="dropdown-content">
-                        <a href="/account.php">Личный кабинет</a>
-                        <a href="/balance.php">Баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> руб.</a>
+                        <a href="/entrypoint/account.php">Личный кабинет</a>
+                        <a href="/entrypoint/balance.php">Баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> руб.</a>
                         <?php if (isAdmin()): ?>
-                            <a href="/admin.php">Админ панель</a>
+                            <a href="/entrypoint/admin.php">Админ панель</a>
                         <?php endif; ?>
-                        <a href="/logout.php">Выйти</a>
+                        <a href="/entrypoint/logout.php">Выйти</a>
                     </div>
                 </div>
             <?php else: ?>
                 <div class="auth-links">
-                    <a href="/login.php" class="login-btn">Войти</a>
-                    <a href="/register.php" class="register-btn">Регистрация</a>
+                    <a href="/entrypoint/login.php" class="login-btn">Войти</a>
+                    <a href="/entrypoint/register.php" class="register-btn">Регистрация</a>
                 </div>
             <?php endif; ?>
         </div>

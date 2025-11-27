@@ -11,35 +11,30 @@ $user = getUserInfo();
 $errors = [];
 $success = '';
 
-// Обработка загрузки аватарки - ТОЛЬКО ДЛЯ ПОДТВЕРЖДЕННЫХ ПОЛЬЗОВАТЕЛЕЙ
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     if (!$user['is_verified']) {
         $errors[] = "Для загрузки аватарки необходимо подтвердить email адрес";
     } elseif ($_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
         $file = $_FILES['avatar'];
         
-        // Проверяем тип файла
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
         $file_type = mime_content_type($file['tmp_name']);
         
         if (!in_array($file_type, $allowed_types)) {
             $errors[] = "Разрешены только файлы JPG, PNG и GIF";
-        } elseif ($file['size'] > 5 * 1024 * 1024) { // 5MB
+        } elseif ($file['size'] > 5 * 1024 * 1024) { 
             $errors[] = "Файл слишком большой. Максимальный размер 5MB";
         } else {
-            // Генерируем уникальное имя файла
             $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
             $filename = 'avatar_' . $user['user_id'] . '_' . time() . '.' . $extension;
             $upload_dir = '/var/www/html/public/uploads/avatars/';
             $upload_path = $upload_dir . $filename;
             
-            // Проверяем и создаем директорию если нужно
             if (!is_dir($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
             
             if (move_uploaded_file($file['tmp_name'], $upload_path)) {
-                // Сохраняем путь в базу данных
                 $avatar_url = '/uploads/avatars/' . $filename;
                 $stmt = $pdo->prepare("UPDATE Users SET avatar_url = ? WHERE user_id = ?");
                 if ($stmt->execute([$avatar_url, $user['user_id']])) {
@@ -57,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     }
 }
 
-// Пополнение баланса
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     $amount = floatval($_POST['amount']);
     
@@ -65,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         try {
             $stmt = $pdo->prepare("UPDATE Users SET balance = balance + ? WHERE user_id = ?");
             if ($stmt->execute([$amount, $user['user_id']])) {
-                $success = "Баланс успешно пополнен на " . $amount . " руб.";
+                $success = "Баланс успешно пополнен на " . $amount . " $.";
                 $user = getUserInfo();
             } else {
                 $errors[] = "Ошибка при пополнении баланса";
@@ -106,13 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         <div class="main-content">
             <h1>Профиль пользователя</h1>
 
-            <!-- Блок статуса верификации -->
             <?php if (!$user['is_verified']): ?>
                 <div class="alert warning">
                     <h3>⚠️ Email не подтвержден</h3>
                     <p>Для доступа ко всем функциям (включая загрузку аватарки) необходимо подтвердить ваш email адрес.</p>
                     <p>Проверьте вашу почту <?= htmlspecialchars($user['email']) ?> и введите код подтверждения.</p>
-                    <a href="/verify.php" class="btn-primary">Подтвердить email</a>
+                    <a href="/entrypoint/verify.php" class="btn-primary">Подтвердить email</a>
                 </div>
             <?php else: ?>
                 <div class="alert success">
@@ -190,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
 
             <div class="balance-card">
                 <h3>Баланс</h3>
-                <div class="balance-amount"><?= number_format($user['balance'] ?? 0, 2) ?> руб.</div>
+                <div class="balance-amount"><?= number_format($user['balance'] ?? 0, 2) ?> $.</div>
                 
                 <form method="post" class="balance-form">
                     <div class="form-group">

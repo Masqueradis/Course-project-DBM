@@ -25,11 +25,11 @@ $user = getUserInfo();
         <div class="sidebar">
             <h3>Личный кабинет</h3>
             <ul>
-                <li><a href="index.php">Профиль</a></li>
+                <li><a href="account.php">Профиль</a></li>
                 <li><a href="balance.php">Баланс</a></li>
                 <li><a href="orders.php" class="active">Мои заказы</a></li>
                 <?php if (isAdmin()): ?>
-                    <li><a href="/admin.php">Админ панель</a></li>
+                    <li><a href="admin.php">Админ панель</a></li>
                 <?php endif; ?>
             </ul>
         </div>
@@ -37,7 +37,6 @@ $user = getUserInfo();
         <div class="main-content">
             <h1>Мои заказы</h1>
             <p>Здесь будут отображаться ваши заказы...</p>
-            <!-- Позже можно добавить реальные заказы из таблицы Orders -->
         </div>
     </div>
 

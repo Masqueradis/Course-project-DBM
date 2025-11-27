@@ -56,7 +56,7 @@ body {
     border-color: #0156FF;
 }
 
-.btn-primary {
+.btn-primary, .register-btn {
     width: 100%;
     padding: 12px;
     background-color: #0156FF;

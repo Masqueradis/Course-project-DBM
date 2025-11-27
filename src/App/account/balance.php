@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         try {
             $stmt = $pdo->prepare("UPDATE Users SET balance = balance + ? WHERE user_id = ?");
             if ($stmt->execute([$amount, $user['user_id']])) {
-                $success = "Баланс успешно пополнен на " . $amount . " руб.";
+                $success = "Баланс успешно пополнен на " . $amount . " $.";
                 $user = getUserInfo();
             } else {
                 $errors[] = "Ошибка при пополнении баланса";
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         <div class="sidebar">
             <h3>Личный кабинет</h3>
             <ul>
-                <li><a href="/account.php">Профиль</a></li> <!-- ИСПРАВЛЕНО: ссылка на account.php -->
+                <li><a href="account.php">Профиль</a></li>
                 <li><a href="balance.php" class="active">Баланс</a></li>
                 <li><a href="orders.php">Мои заказы</a></li>
                 <?php if (isAdmin()): ?>
@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
 
             <div class="balance-card">
                 <h3>Текущий баланс</h3>
-                <div class="balance-amount"><?= number_format($user['balance'] ?? 0, 2) ?> руб.</div>
+                <div class="balance-amount"><?= number_format($user['balance'] ?? 0, 2) ?> $.</div>
                 
                 <form method="post" class="balance-form">
                     <div class="form-group">

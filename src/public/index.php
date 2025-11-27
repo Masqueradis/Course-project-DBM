@@ -1,18 +1,13 @@
 <?php
-// Включаем вывод ошибок для отладки
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Получаем запрошенный путь
 $request_uri = $_SERVER['REQUEST_URI'];
 $path = parse_url($request_uri, PHP_URL_PATH);
 
-// Убираем начальный слэш
 $path = ltrim($path, '/');
 
-// Если путь пустой или корневой, показываем главную страницу
 if ($path === '' || $path === '/') {
-    // Подключаем конфигурацию и функции
     require_once __DIR__ . '/../App/config/database.php';
     require_once __DIR__ . '/../App/auth/functions.php';
     
@@ -39,20 +34,20 @@ if ($path === '' || $path === '/') {
                     <div style="text-align: center; margin-top: 50px;">
                         <h2>Начните покупки прямо сейчас!</h2>
                         <div style="margin-top: 20px;">
-                            <a href="/register.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px; margin: 0 10px;">
+                            <a href="/entrypoint/register.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px; margin: 0 10px;">
                                 Зарегистрироваться
                             </a>
-                            <a href="/login.php" style="display: inline-block; padding: 12px 30px; margin: 0 10px; color: #0156FF; border: 1px solid #0156FF; border-radius: 4px; text-decoration: none;">
+                            <a href="/entrypoint/login.php" style="display: inline-block; padding: 12px 30px; margin: 0 10px; color: #0156FF; border: 1px solid #0156FF; border-radius: 4px; text-decoration: none;">
                                 Войти
                             </a>
                         </div>
-                    </div>
+                    </div> 
                 <?php else: ?>
                     <div style="text-align: center; margin-top: 50px;">
                         <h2>Добро пожаловать, <?= htmlspecialchars($user_info['first_name'] ?? 'Пользователь') ?>!</h2>
-                        <p>Ваш баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> руб.</p>
+                        <p>Ваш баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> $.</p>
                         <div style="margin-top: 20px;">
-                            <a href="/account.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px;">
+                            <a href="/entrypoint/account.php" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 30px;">
                                 Перейти в личный кабинет
                             </a>
                         </div>
@@ -68,20 +63,15 @@ if ($path === '' || $path === '/') {
     exit;
 }
 
-// Для всех остальных маршрутов
 $full_path = __DIR__ . '/' . $path;
 
 if (file_exists($full_path) && is_file($full_path)) {
-    // Если файл существует в public, выполняем его
     if (strpos($path, '.php') !== false) {
-        // Для PHP файлов выполняем их
         require_once $full_path;
     } else {
-        // Для статических файлов отдаем как есть
         return false;
     }
 } else {
-    // 404 ошибка
     http_response_code(404);
     echo "<h1>404 - Страница не найдена</h1>";
     echo "<p>Запрошенная страница не существует: " . htmlspecialchars($path) . "</p>";

@@ -132,21 +132,3 @@
     display: flex;
     gap: 10px;
 }
-
-.login-btn,
-.register-btn {
-    padding: 8px 15px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.login-btn {
-    color: #0156FF;
-    border: 1px solid #0156FF;
-}
-
-.register-btn {
-    background-color: #0156FF;
-    color: white;
-}
