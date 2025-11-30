@@ -32,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Получение списка пользователей
 $stmt = $pdo->query("SELECT user_id, email, first_name, last_name, balance, role, is_active, created_at FROM Users ORDER BY created_at DESC");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

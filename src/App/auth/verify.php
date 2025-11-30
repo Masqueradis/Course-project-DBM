@@ -5,9 +5,7 @@ require_once __DIR__ . '/../config/database.php';
 $errors = [];
 $success = false;
 
-// Улучшенная проверка сессии
 if (isset($_SESSION['user_id'])) {
-    // Если пользователь уже авторизован, но не подтвержден
     $user_id = $_SESSION['user_id'];
     $stmt = $pdo->prepare("SELECT email, is_verified FROM Users WHERE user_id = ?");
     $stmt->execute([$user_id]);
@@ -18,10 +16,8 @@ if (isset($_SESSION['user_id'])) {
     }
 }
 
-// Если email не в сессии, проверяем параметр GET или редиректим
 if (!isset($_SESSION['verification_email'])) {
     if (isset($_GET['email'])) {
-        // Проверяем существование пользователя
         $email = $_GET['email'];
         $stmt = $pdo->prepare("SELECT user_id, is_verified FROM Users WHERE email = ?");
         $stmt->execute([$email]);
@@ -41,13 +37,11 @@ if (!isset($_SESSION['verification_email'])) {
 
 $email = $_SESSION['verification_email'];
 
-// Проверяем, не подтвержден ли уже email
 $stmt = $pdo->prepare("SELECT is_verified FROM Users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
 if ($user && $user['is_verified']) {
-    // Если уже подтвержден, редиректим в аккаунт
     if (isset($_SESSION['user_id'])) {
         header("Location: /account.php");
     } else {
@@ -56,7 +50,6 @@ if ($user && $user['is_verified']) {
     exit;
 }
 
-// Повторная отправка кода
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) {
     $verification_code = sprintf("%06d", mt_rand(1, 999999));
     $verification_expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
@@ -75,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['resend'])) {
     }
 }
 
-// Проверка кода
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
     $code = trim($_POST['code']);
     
@@ -88,16 +80,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
         
         if ($user) {
             if ($user['verification_code'] === $code) {
-                // Проверяем не истек ли срок действия кода
                 if (strtotime($user['verification_code_expires']) > time()) {
-                    // Активируем аккаунт
                     $stmt = $pdo->prepare("UPDATE Users SET is_verified = 1, verification_code = NULL, verification_code_expires = NULL WHERE user_id = ?");
                     if ($stmt->execute([$user['user_id']])) {
-                        // Устанавливаем сессию пользователя если ее нет
                         if (!isset($_SESSION['user_id'])) {
                             $_SESSION['user_id'] = $user['user_id'];
                             
-                            // Получаем данные пользователя
                             $stmt = $pdo->prepare("SELECT email, first_name, role FROM Users WHERE user_id = ?");
                             $stmt->execute([$user['user_id']]);
                             $user_data = $stmt->fetch();
@@ -108,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                         }
                         
                         unset($_SESSION['verification_email']);
-                        header("Location: /account.php");
+                        header("Location: account.php");
                         exit;
                     } else {
                         $errors[] = "Ошибка при активации аккаунта";

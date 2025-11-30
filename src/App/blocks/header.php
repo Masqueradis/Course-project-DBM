@@ -1,8 +1,6 @@
 <?php
-// Подключаем конфигурацию БД
 require_once __DIR__ . '/../config/database.php';
 
-// Функции аутентификации
 require_once __DIR__ . '/../auth/functions.php';
 
 $user_info = isLoggedIn() ? getUserInfo() : null;

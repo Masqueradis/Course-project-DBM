@@ -7,7 +7,6 @@ if (!isAdmin()) {
     exit;
 }
 
-// Базовая статистика
 $stats = [
     'total_users' => 0,
     'total_products' => 0,

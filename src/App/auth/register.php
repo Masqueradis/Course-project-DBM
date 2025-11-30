@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = "Пароли не совпадают";
     }
 
-    // Проверка существующего email
     if (empty($errors)) {
         $stmt = $pdo->prepare("SELECT user_id FROM Users WHERE email = ?");
         $stmt->execute([$email]);
@@ -37,18 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Регистрация
     if (empty($errors)) {
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
         
-        // Генерируем код подтверждения
         $verification_code = sprintf("%06d", mt_rand(1, 999999));
         $verification_expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
         
         $stmt = $pdo->prepare("INSERT INTO Users (email, password_hash, first_name, last_name, verification_code, verification_code_expires) VALUES (?, ?, ?, ?, ?, ?)");
         
         if ($stmt->execute([$email, $password_hash, $first_name, $last_name, $verification_code, $verification_expires])) {
-            // Отправляем email с кодом подтверждения
             $database = new Database();
             if ($database->sendVerificationEmail($email, $verification_code)) {
                 $success = true;
