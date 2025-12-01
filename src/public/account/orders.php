@@ -16,16 +16,16 @@ $user = getUserInfo();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои заказы</title>
-    <link rel="stylesheet" href="/css/account.css">
+    <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/../../App/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/header.php'; ?>
 
     <div class="account-container">
         <div class="sidebar">
             <h3>Личный кабинет</h3>
             <ul>
-                <li><a href="account.php">Профиль</a></li>
+                <li><a href="/../index.php">Профиль</a></li>
                 <li><a href="balance.php">Баланс</a></li>
                 <li><a href="orders.php" class="active">Мои заказы</a></li>
                 <?php if (isAdmin()): ?>
@@ -40,6 +40,6 @@ $user = getUserInfo();
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/../../App/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/footer.php'; ?>
 </body>
 </html>

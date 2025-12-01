@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Подтверждение email</title>
-    <link rel="stylesheet" href="/css/auth.css">
+    <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
     <div class="auth-container">
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                     <small>Код из письма, отправленного на вашу почту</small>
                 </div>
 
-                <button type="submit" class="btn-primary" href="/entrypoint/account.php">Подтвердить email</button>
+                <button type="submit" class="btn-primary" href="/account.php">Подтвердить email</button>
             </form>
 
             <form method="post" class="resend-form">
@@ -160,8 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
             </form>
 
             <div class="auth-links">
-                <a href="/entrypoint/register.php">Вернуться к регистрации</a> |
-                <a href="/entrypoint/login.php">Войти в аккаунт</a>
+                <a href="/register.php">Вернуться к регистрации</a> |
+                <a href="/login.php">Войти в аккаунт</a>
             </div>
         </div>
     </div>

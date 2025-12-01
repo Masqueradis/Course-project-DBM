@@ -1,6 +1,6 @@
 <?php
-require_once '../config/database.php';
-require_once '../auth/functions.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../auth/functions.php';
 redirectIfNotAdmin();
 
 // Обработка действий
@@ -28,6 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE Users SET role = ? WHERE user_id = ?");
                 $stmt->execute([$role, $user_id]);
                 break;
+
+            case 'block_user':
+                $stmt = $pdo->prepare("UPDATE Users SET is_active = 0 WHERE user_id = ?");
+                $stmt->execute([$user_id]);
+                break;
+
+            case 'unblock_user':
+                $stmt = $pdo->prepare("UPDATE Users SET is_active = 1 WHERE user_id = ?");
+                $stmt->execute([$user_id]);
+                break;
         }
     }
 }
@@ -42,10 +52,10 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление пользователями</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
-    <?php require_once '../../App/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/header.php'; ?>
 
     <div class="admin-container">
         <div class="admin-sidebar">
@@ -55,7 +65,8 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <li><a href="users.php" class="active">Пользователи</a></li>
                 <li><a href="products.php">Товары</a></li>
                 <li><a href="orders.php">Заказы</a></li>
-                <li><a href="/App/account/index.php">Личный кабинет</a></li>
+                <li><a href="reviews.php">Отзывы</a></li>
+                <li><a href="/account/index.php">Личный кабинет</a></li>
             </ul>
         </div>
 
@@ -94,20 +105,31 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </form>
                                 </td>
                                 <td>
-                                    <form method="post" class="inline-form">
-                                        <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
-                                        <button type="submit" name="action" value="toggle_active" class="btn-small <?= $user['is_active'] ? 'btn-danger' : 'btn-success' ?>">
-                                            <?= $user['is_active'] ? 'Деактивировать' : 'Активировать' ?>
-                                        </button>
-                                    </form>
+                                    <span class="<?= $user['is_active'] ? 'success' : 'error' ?>" style="padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                        <?= $user['is_active'] ? 'Активен' : 'Заблокирован' ?>
+                                    </span>
                                 </td>
                                 <td><?= date('d.m.Y', strtotime($user['created_at'])) ?></td>
                                 <td>
-                                    <form method="post" class="inline-form balance-form">
-                                        <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
-                                        <input type="number" name="amount" step="0.01" placeholder="Сумма" required>
-                                        <button type="submit" name="action" value="change_balance" class="btn-small">Изм. баланс</button>
-                                    </form>
+                                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                        <?php if ($user['is_active']): ?>
+                                            <form method="post" class="inline-form">
+                                                <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
+                                                <button type="submit" name="action" value="block_user" class="btn-small btn-danger" onclick="return confirm('Заблокировать пользователя?')">Блокировать</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="post" class="inline-form">
+                                                <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
+                                                <button type="submit" name="action" value="unblock_user" class="btn-small btn-success">Разблокировать</button>
+                                            </form>
+                                        <?php endif; ?>
+                                        
+                                        <form method="post" class="inline-form balance-form">
+                                            <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
+                                            <input type="number" name="amount" step="0.01" placeholder="Сумма" required style="width: 100px;">
+                                            <button type="submit" name="action" value="change_balance" class="btn-small">Изм. баланс</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -117,6 +139,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <?php require_once '../../App/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/footer.php'; ?>
 </body>
 </html>

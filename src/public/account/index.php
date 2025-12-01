@@ -1,9 +1,10 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../auth/functions.php';
+require_once __DIR__ . '/../config/paths.php';
 
 if (!isLoggedIn()) {
-    header("Location: /login.php");
+    header("Location: " . LOGIN_URL);
     exit;
 }
 
@@ -79,20 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль пользователя</title>
-    <link rel="stylesheet" href="/css/account.css">
+    <link rel="stylesheet" href="/../css/css.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/../../App/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/header.php'; ?>
 
     <div class="account-container">
         <div class="sidebar">
             <h3>Личный кабинет</h3>
             <ul>
-                <li><a href="/account.php" class="active">Профиль</a></li>
-                <li><a href="balance.php">Баланс</a></li>
-                <li><a href="orders.php">Мои заказы</a></li>
+                <li><a href="<?= ACCOUNT_URL ?>" class="active">Профиль</a></li>
+                <li><a href="<?= BALANCE_URL ?>">Баланс</a></li>
+                <li><a href="<?= ORDERS_URL ?>">Мои заказы</a></li>
+                <li><a href="<?= CART_URL ?>">Корзина</a></li>
                 <?php if (isAdmin()): ?>
-                    <li><a href="/admin.php">Админ панель</a></li>
+                    <li><a href="<?= ADMIN_URL ?>">Админ панель</a></li>
                 <?php endif; ?>
             </ul>
         </div>
@@ -105,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
                     <h3>⚠️ Email не подтвержден</h3>
                     <p>Для доступа ко всем функциям (включая загрузку аватарки) необходимо подтвердить ваш email адрес.</p>
                     <p>Проверьте вашу почту <?= htmlspecialchars($user['email']) ?> и введите код подтверждения.</p>
-                    <a href="/entrypoint/verify.php" class="btn-primary">Подтвердить email</a>
+                    <a href="/../auth/verify.php" class="btn-primary">Подтвердить email</a>
                 </div>
             <?php else: ?>
                 <div class="alert success">
@@ -139,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
                     <?php else: ?>
                         <div class="verification-required">
                             <p>Для загрузки аватарки необходимо подтвердить email</p>
-                            <a href="/verify.php" class="btn-primary">Подтвердить email</a>
+                            <a href="/../auth/verify.php" class="btn-primary">Подтвердить email</a>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -208,6 +210,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/../../App/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/footer.php'; ?>
 </body>
 </html>

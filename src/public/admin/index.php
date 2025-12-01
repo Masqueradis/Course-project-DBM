@@ -37,10 +37,10 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ панель</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/../../App/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/header.php'; ?>
 
     <div class="admin-container">
         <div class="admin-sidebar">
@@ -50,7 +50,7 @@ try {
                 <li><a href="users.php">Пользователи</a></li>
                 <li><a href="products.php">Товары</a></li>
                 <li><a href="orders.php">Заказы</a></li>
-                <li><a href="/App/account/index.php">Личный кабинет</a></li>
+                <li><a href="/account/index.php">Личный кабинет</a></li>
             </ul>
         </div>
 
@@ -78,6 +78,6 @@ try {
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/../../App/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/footer.php'; ?>
 </body>
 </html>

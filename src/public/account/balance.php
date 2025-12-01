@@ -39,10 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Баланс</title>
-    <link rel="stylesheet" href="/css/account.css">
+    <link rel="stylesheet" href="/../css/css.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/../../App/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/header.php'; ?>
 
     <div class="account-container">
         <div class="sidebar">
@@ -92,6 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/../../App/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/../blocks/footer.php'; ?>
 </body>
 </html>
