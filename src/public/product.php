@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/auth/functions.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/functions.php';
 
 if (!isset($_GET['id'])) {
     header("Location: /catalog.php");
@@ -10,333 +10,286 @@ if (!isset($_GET['id'])) {
 $product_id = intval($_GET['id']);
 $user_info = isLoggedIn() ? getUserInfo() : null;
 
-// Получение информации о товаре
-$stmt = $pdo->prepare("CALL GetProductDetails(?)");
+// 1. Получение данных о товаре
+$stmt = $pdo->prepare("SELECT p.*, b.name as brand_name FROM Products p LEFT JOIN Brands b ON p.brand_id = b.brand_id WHERE p.product_id = ? AND p.is_active = 1");
 $stmt->execute([$product_id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
-$stmt->closeCursor(); // Важно: закрываем курсор после хранимой процедуры
 
 if (!$product) {
-    header("Location: /catalog.php");
+    echo "<div class='container-wrap' style='padding:50px;'><h2>Товар не найден</h2><a href='/catalog.php'>Вернуться в каталог</a></div>";
     exit;
 }
 
-// Получение отзывов
-$stmt = $pdo->prepare("CALL GetProductReviews(?)");
-$stmt->execute([$product_id]);
-$reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$stmt->closeCursor(); // Закрываем курсор
+// 2. Проверяем, оставлял ли текущий пользователь отзыв
+$existing_review = null;
+if (isLoggedIn()) {
+    $stmt = $pdo->prepare("SELECT * FROM Reviews WHERE user_id = ? AND product_id = ?");
+    $stmt->execute([$_SESSION['user_id'], $product_id]);
+    $existing_review = $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
-// Обработка добавления отзыва
-$errors = [];
-$success = '';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_review'])) {
+// 3. Обработка формы отзыва
+$review_message = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_review') {
     if (!isLoggedIn()) {
-        $errors[] = "Для добавления отзыва необходимо войти в систему";
+        header("Location: /login.php");
+        exit;
+    }
+
+    $rating = intval($_POST['rating'] ?? 0);
+    $comment = trim($_POST['comment'] ?? '');
+    $user_id = $_SESSION['user_id'];
+
+    if ($rating < 1 || $rating > 5) {
+        $review_message = "<div class='alert error'>Пожалуйста, поставьте оценку.</div>";
+    } elseif (empty($comment)) {
+        $review_message = "<div class='alert error'>Напишите комментарий.</div>";
     } else {
-        $rating = intval($_POST['rating']);
-        $title = trim($_POST['title']);
-        $comment = trim($_POST['comment']);
-        
-        if ($rating < 1 || $rating > 5) {
-            $errors[] = "Оценка должна быть от 1 до 5";
-        }
-        
-        if (empty($title)) {
-            $errors[] = "Заголовок отзыва обязателен";
-        }
-        
-        if (empty($errors)) {
-            // Проверяем, не оставлял ли пользователь уже отзыв
-            $stmt = $pdo->prepare("SELECT review_id FROM Reviews WHERE user_id = ? AND product_id = ?");
-            $stmt->execute([$_SESSION['user_id'], $product_id]);
+        try {
+            // Проверка на покупку (Verified Purchase)
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) FROM OrderItems oi 
+                JOIN Orders o ON oi.order_id = o.order_id 
+                WHERE o.user_id = ? AND oi.product_id = ? AND o.status = 'completed'
+            ");
+            $stmt->execute([$user_id, $product_id]);
+            $is_verified = $stmt->fetchColumn() > 0 ? 1 : 0;
+
+            // ON DUPLICATE KEY UPDATE: Если отзыв уже есть, обновляем его
+            $stmt = $pdo->prepare("
+                INSERT INTO Reviews (user_id, product_id, rating, comment, is_verified_purchase, is_approved, created_at) 
+                VALUES (?, ?, ?, ?, ?, 0, NOW())
+                ON DUPLICATE KEY UPDATE 
+                    rating = VALUES(rating), 
+                    comment = VALUES(comment), 
+                    is_approved = 0, -- Отправляем на повторную модерацию при изменении
+                    created_at = NOW()
+            ");
+            $stmt->execute([$user_id, $product_id, $rating, $comment, $is_verified]);
             
-            if ($stmt->fetch()) {
-                $errors[] = "Вы уже оставляли отзыв на этот товар";
-            } else {
-                $stmt = $pdo->prepare("INSERT INTO Reviews (user_id, product_id, rating, title, comment) VALUES (?, ?, ?, ?, ?)");
-                if ($stmt->execute([$_SESSION['user_id'], $product_id, $rating, $title, $comment])) {
-                    $success = "Отзыв успешно добавлен";
-                    // Обновляем список отзывов
-                    $stmt = $pdo->prepare("CALL GetProductReviews(?)");
-                    $stmt->execute([$product_id]);
-                    $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    $stmt->closeCursor();
-                } else {
-                    $errors[] = "Ошибка при добавлении отзыва";
-                }
-            }
+            // Обновляем страницу, чтобы показать сообщение
+            header("Location: product.php?id=$product_id&review_success=1");
+            exit;
+
+        } catch (Exception $e) {
+            $review_message = "<div class='alert error'>Ошибка: " . $e->getMessage() . "</div>";
         }
     }
 }
+
+if (isset($_GET['review_success'])) {
+    $review_message = "<div class='alert success'>Ваш отзыв успешно сохранен и отправлен на модерацию.</div>";
+    // Обновим данные отзыва, чтобы отобразить новые значения в форме
+    if (isLoggedIn()) {
+        $stmt = $pdo->prepare("SELECT * FROM Reviews WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$_SESSION['user_id'], $product_id]);
+        $existing_review = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+// 4. Характеристики (Карта полей)
+$specs_map = [
+    'processor' => ['table' => 'Processors', 'title' => 'Процессор', 'fields' => ['socket' => ['Сокет', ''], 'cores' => ['Ядра', ''], 'threads' => ['Потоки', ''], 'base_frequency' => ['Базовая частота', ' ГГц'], 'max_frequency' => ['Макс. частота', ' ГГц'], 'cache' => ['Кэш', ' МБ'], 'tdp' => ['TDP', ' Вт']]],
+    'videocard' => ['table' => 'Videocards', 'title' => 'Видеокарта', 'fields' => ['memory_size' => ['Память', ' ГБ'], 'memory_type' => ['Тип памяти', ''], 'gpu_frequency' => ['Частота GPU', ' ГГц'], 'tdp' => ['TDP', ' Вт']]],
+    'motherboard' => ['table' => 'Motherboards', 'title' => 'Материнская плата', 'fields' => ['socket' => ['Сокет', ''], 'chipset' => ['Чипсет', ''], 'form_factor' => ['Форм-фактор', ''], 'memory_slots' => ['Слоты памяти', ''], 'max_memory' => ['Макс. память', ' ГБ']]],
+    'ram' => ['table' => 'RAM', 'title' => 'ОЗУ', 'fields' => ['capacity' => ['Объем', ' ГБ'], 'type' => ['Тип', ''], 'frequency' => ['Частота', ' МГц'], 'latency' => ['Тайминги', '']]],
+    'ssd' => ['table' => 'SSDs', 'title' => 'SSD', 'fields' => ['capacity' => ['Объем', ' ГБ'], 'interface' => ['Интерфейс', ''], 'read_speed' => ['Чтение', ' МБ/с'], 'write_speed' => ['Запись', ' МБ/с']]],
+    'hdd' => ['table' => 'HDDs', 'title' => 'HDD', 'fields' => ['capacity' => ['Объем', ' ГБ'], 'rpm' => ['Скорость', ' об/мин'], 'form_factor' => ['Форм-фактор', '']]],
+    'powersupply' => ['table' => 'PowerSupplies', 'title' => 'Блок питания', 'fields' => ['power' => ['Мощность', ' Вт'], 'efficiency' => ['Сертификат', ''], 'modular' => ['Модульный', '']]],
+    'cooling' => ['table' => 'Cooling', 'title' => 'Охлаждение', 'fields' => ['type' => ['Тип', ''], 'fan_size' => ['Вентилятор', ' мм'], 'max_tdp' => ['Макс. TDP', ' Вт']]],
+    'case' => ['table' => 'ComputerCases', 'title' => 'Корпус', 'fields' => ['form_factor' => ['Форм-фактор', ''], 'color' => ['Цвет', '']]]
+];
+
+$specs_data = null;
+$specs_config = null;
+if (isset($specs_map[$product['product_type']])) {
+    $specs_config = $specs_map[$product['product_type']];
+    $table = $specs_config['table'];
+    $stmt = $pdo->prepare("SELECT * FROM $table WHERE product_id = ?");
+    $stmt->execute([$product_id]);
+    $specs_data = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// 5. Получение списка отзывов
+$stmt = $pdo->prepare("
+    SELECT r.*, u.first_name, u.last_name 
+    FROM Reviews r 
+    JOIN Users u ON r.user_id = u.user_id 
+    WHERE r.product_id = ? AND r.is_approved = 1 
+    ORDER BY r.created_at DESC
+");
+$stmt->execute([$product_id]);
+$reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($product['name']) ?></title>
+    <title><?= htmlspecialchars($product['name']) ?> | Магазин</title>
     <link rel="stylesheet" href="/css/css.css">
-    <style>
-        .product-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        
-        .product-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 50px;
-        }
-        
-        .product-info h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-        
-        .product-price {
-            font-size: 2em;
-            font-weight: bold;
-            color: #0156FF;
-            margin-bottom: 20px;
-        }
-        
-        .product-meta {
-            margin-bottom: 20px;
-        }
-        
-        .product-meta div {
-            margin-bottom: 10px;
-            color: #666;
-        }
-        
-        .reviews-section {
-            margin-top: 50px;
-        }
-        
-        .review-form {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .review-item {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .review-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        
-        .review-author {
-            font-weight: bold;
-        }
-        
-        .review-rating {
-            color: #ffc107;
-        }
-        
-        .review-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .rating-stars {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-        }
-        
-        .rating-stars input {
-            display: none;
-        }
-        
-        .rating-stars label {
-            cursor: pointer;
-            font-size: 24px;
-            color: #ddd;
-        }
-        
-        .rating-stars input:checked ~ label,
-        .rating-stars label:hover,
-        .rating-stars label:hover ~ label {
-            color: #ffc107;
-        }
-    </style>
 </head>
 <body>
-    <?php require_once __DIR__ . '/blocks/header.php'; ?>
+<?php require_once __DIR__ . '/header.php'; ?>
 
-    <div class="product-container">
-        <!-- Хлебные крошки -->
-        <div style="margin-bottom: 20px;">
-            <a href="/catalog.php">Каталог</a> &gt; 
-            <span><?= htmlspecialchars($product['name']) ?></span>
+<div class="container-wrap" style="margin-top: 40px; margin-bottom: 40px;">
+    
+    <div class="product-main">
+        <div class="product-gallery">
+            <?php if (!empty($product['image_url'])): ?>
+                <img src="<?= htmlspecialchars($product['image_url']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+            <?php else: ?>
+                <div class="product-image-placeholder-large">
+                    <span>Нет изображения</span>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="product-details">
-            <div>
-                <?php if (!empty($product['image_url'])): ?>
-                    <img src="<?= htmlspecialchars($product['image_url']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="product-image-fixed" style="margin: 0 auto; display: block;">
-                <?php else: ?>
-                    <div class="product-image-placeholder" style="margin: 0 auto;">
-                        Изображение отсутствует
-                    </div>
-                <?php endif; ?>
+            <div class="product-brand"><?= htmlspecialchars($product['brand_name'] ?? 'Бренд не указан') ?></div>
+            <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
+            <div style="color: #777; margin-bottom: 15px; font-size: 14px;">
+                Артикул: <?= htmlspecialchars($product['sku']) ?> | Модель: <?= htmlspecialchars($product['model']) ?>
             </div>
             
-            <div class="product-info">
-                <h1><?= htmlspecialchars($product['name']) ?></h1>
-                <div class="product-price"><?= number_format($product['price'], 2) ?> руб.</div>
-                
-                <div class="product-meta">
-                    <div><strong>Модель:</strong> <?= htmlspecialchars($product['model']) ?></div>
-                    <div><strong>Бренд:</strong> <?= htmlspecialchars($product['brand_name'] ?? 'Не указан') ?></div>
-                    <div><strong>Тип:</strong> 
-                        <?php 
-                            $type_names = [
-                                'processor' => 'Процессор',
-                                'videocard' => 'Видеокарта', 
-                                'motherboard' => 'Материнская плата',
-                                'ram' => 'Оперативная память',
-                                'ssd' => 'SSD',
-                                'hdd' => 'HDD',
-                                'powersupply' => 'Блок питания',
-                                'cooling' => 'Охлаждение',
-                                'case' => 'Корпус'
-                            ];
-                            echo $type_names[$product['product_type']] ?? $product['product_type'];
-                        ?>
-                    </div>
-                    <div><strong>Наличие:</strong> 
-                        <span style="color: <?= $product['stock'] > 0 ? '#28a745' : '#dc3545' ?>;">
-                            <?= $product['stock'] > 0 ? "В наличии ({$product['stock']} шт.)" : 'Нет в наличии' ?>
-                        </span>
-                    </div>
-                </div>
-                
-                <?php if (!empty($product['description'])): ?>
-                    <div class="product-description">
-                        <h3>Описание</h3>
-                        <p><?= nl2br(htmlspecialchars($product['description'])) ?></p>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($product['stock'] > 0 && isLoggedIn()): ?>
-                    <div style="margin-top: 30px;">
-                        <form method="post" action="/cart.php" style="display: inline;">
-                            <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
-                            <input type="hidden" name="quantity" value="1">
-                            <button type="submit" name="action" value="add" class="btn-primary">Добавить в корзину</button>
-                        </form>
-                    </div>
-                <?php elseif (!isLoggedIn()): ?>
-                    <div style="margin-top: 30px;">
-                        <a href="/login.php" class="btn-primary">Войдите чтобы купить</a>
-                    </div>
-                <?php endif; ?>
+            <div class="stock-status <?= $product['stock'] > 0 ? 'in-stock' : 'out-of-stock' ?>">
+                <?= $product['stock'] > 0 ? "В наличии ({$product['stock']} шт.)" : "Нет в наличии" ?>
             </div>
-        </div>
 
-        <!-- Секция отзывов -->
-        <div class="reviews-section">
-            <h2>Отзывы о товаре</h2>
-            
-            <!-- Форма добавления отзыва -->
-            <?php if (isLoggedIn()): ?>
-                <div class="review-form">
-                    <h3>Оставить отзыв</h3>
+            <div class="product-price-large"><?= formatPrice($product['price']) ?></div>
+
+            <?php if ($product['stock'] > 0): ?>
+                <form action="cart.php" method="POST" style="display: flex; gap: 10px; max-width: 300px;">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="product_id" value="<?= $product['product_id'] ?>">
                     
-                    <?php if ($success): ?>
-                        <div class="alert success"><?= $success ?></div>
+                    <input type="number" name="quantity" value="1" min="1" max="<?= $product['stock'] ?>" style="width: 80px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;">
+                    
+                    <?php if (isLoggedIn()): ?>
+                        <button type="submit" class="btn-primary" style="flex: 1; font-size: 16px;">В корзину</button>
+                    <?php else: ?>
+                        <a href="login.php" class="btn-primary" style="flex: 1; text-align: center; background-color: #ccc;">Войти для покупки</a>
                     <?php endif; ?>
-                    
-                    <?php if (!empty($errors)): ?>
-                        <div class="alert error">
-                            <?php foreach ($errors as $error): ?>
-                                <p><?= htmlspecialchars($error) ?></p>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <form method="post">
-                        <div class="form-group">
-                            <label>Оценка *</label>
-                            <div class="rating-stars">
-                                <?php for ($i = 5; $i >= 1; $i--): ?>
-                                    <input type="radio" id="star<?= $i ?>" name="rating" value="<?= $i ?>" required>
-                                    <label for="star<?= $i ?>">★</label>
-                                <?php endfor; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Заголовок отзыва *</label>
-                            <input type="text" name="title" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Комментарий</label>
-                            <textarea name="comment" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
-                        </div>
-                        
-                        <button type="submit" name="add_review" class="btn-primary">Оставить отзыв</button>
-                    </form>
-                </div>
+                </form>
             <?php else: ?>
-                <div class="alert info">
-                    <p>Для добавления отзыва <a href="/login.php">войдите в систему</a></p>
-                </div>
-            <?php endif; ?>
-            
-            <!-- Список отзывов -->
-            <div class="reviews-list">
-                <?php if (empty($reviews)): ?>
-                    <div class="alert info">
-                        <p>Пока нет отзывов о этом товаре. Будьте первым!</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($reviews as $review): ?>
-                        <div class="review-item">
-                            <div class="review-header">
-                                <div class="review-author">
-                                    <?= htmlspecialchars($review['first_name'] . ' ' . $review['last_name']) ?>
-                                </div>
-                                <div class="review-rating">
-                                    <?= str_repeat('★', $review['rating']) ?><?= str_repeat('☆', 5 - $review['rating']) ?>
-                                </div>
-                            </div>
-                            
-                            <?php if (!empty($review['title'])): ?>
-                                <div class="review-title"><?= htmlspecialchars($review['title']) ?></div>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($review['comment'])): ?>
-                                <div class="review-comment"><?= nl2br(htmlspecialchars($review['comment'])) ?></div>
-                            <?php endif; ?>
-                            
-                            <div style="margin-top: 10px; color: #666; font-size: 12px;">
-                                <?= date('d.m.Y H:i', strtotime($review['created_at'])) ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
                 <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2 class="section-title">Подробная информация</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+            <div>
+                <h3 style="margin-bottom: 15px; color: #555;">Характеристики</h3>
+                <table class="specs-table">
+                    <tbody>
+                        <tr><th>Бренд</th><td><?= htmlspecialchars($product['brand_name'] ?? '-') ?></td></tr>
+                        <tr><th>Модель</th><td><?= htmlspecialchars($product['model']) ?></td></tr>
+                        
+                        <?php if ($specs_data && $specs_config): ?>
+                            <?php foreach ($specs_config['fields'] as $key => $info): ?>
+                                <?php if (isset($specs_data[$key]) && $specs_data[$key] !== '' && $specs_data[$key] !== null): ?>
+                                    <tr>
+                                        <th><?= htmlspecialchars($info[0]) ?></th>
+                                        <td>
+                                            <?php 
+                                            $val = $specs_data[$key];
+                                            // Обработка булевых значений (модульный БП, wifi и т.д.)
+                                            if ($val === '1' || $val === 1) echo 'Да';
+                                            elseif ($val === '0' || $val === 0) echo 'Нет';
+                                            else echo htmlspecialchars($val) . htmlspecialchars($info[1]); 
+                                            ?>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3 style="margin-bottom: 15px; color: #555;">Описание</h3>
+                <div style="line-height: 1.8; color: #444;">
+                    <?= nl2br(htmlspecialchars($product['description'] ?? 'Описание отсутствует.')) ?>
+                </div>
             </div>
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/blocks/footer.php'; ?>
+    <div class="content-card">
+        <h2 class="section-title">Отзывы покупателей (<?= count($reviews) ?>)</h2>
+        
+        <?= $review_message ?>
+
+        <?php if (isLoggedIn()): ?>
+            <div style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee;">
+                <h3 style="margin-top: 0; margin-bottom: 15px;">
+                    <?= $existing_review ? 'Редактировать ваш отзыв' : 'Оставить отзыв' ?>
+                </h3>
+                
+                <form method="POST">
+                    <input type="hidden" name="action" value="submit_review">
+                    
+                    <div class="form-group">
+                        <label>Ваша оценка:</label>
+                        <div style="display: flex; gap: 10px;">
+                            <?php $current_rating = $existing_review['rating'] ?? 5; ?>
+                            <select name="rating" style="width: 150px; padding: 8px;">
+                                <option value="5" <?= $current_rating == 5 ? 'selected' : '' ?>>5 - Отлично</option>
+                                <option value="4" <?= $current_rating == 4 ? 'selected' : '' ?>>4 - Хорошо</option>
+                                <option value="3" <?= $current_rating == 3 ? 'selected' : '' ?>>3 - Нормально</option>
+                                <option value="2" <?= $current_rating == 2 ? 'selected' : '' ?>>2 - Плохо</option>
+                                <option value="1" <?= $current_rating == 1 ? 'selected' : '' ?>>1 - Ужасно</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Комментарий:</label>
+                        <textarea name="comment" rows="3" required placeholder="Расскажите о плюсах и минусах..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"><?= htmlspecialchars($existing_review['comment'] ?? '') ?></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">
+                        <?= $existing_review ? 'Обновить отзыв' : 'Отправить отзыв' ?>
+                    </button>
+                </form>
+            </div>
+        <?php else: ?>
+            <div class="alert info">
+                <a href="login.php" style="text-decoration: underline; font-weight: bold;">Войдите</a>, чтобы оставить отзыв.
+            </div>
+        <?php endif; ?>
+
+        <?php if (empty($reviews)): ?>
+            <p style="color: #777; font-style: italic;">Отзывов пока нет. Будьте первым!</p>
+        <?php else: ?>
+            <?php foreach ($reviews as $review): ?>
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="review-author">
+                            <?= htmlspecialchars($review['first_name']) ?>
+                            <?php if($review['is_verified_purchase']): ?>
+                                <span style="font-size: 11px; color: green; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: normal;">Купил этот товар</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="review-date"><?= date('d.m.Y', strtotime($review['created_at'])) ?></div>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <span class="review-stars"><?= str_repeat('★', $review['rating']) ?></span>
+                        <span style="color: #e0e0e0;"><?= str_repeat('★', 5 - $review['rating']) ?></span>
+                    </div>
+                    <div class="review-text">
+                        <?= nl2br(htmlspecialchars($review['comment'])) ?>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+</div>
+
+<?php require_once __DIR__ . '/footer.php'; ?>
 </body>
 </html>

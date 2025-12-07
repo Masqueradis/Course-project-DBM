@@ -1,227 +1,208 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/auth/functions.php';
-require_once __DIR__ . '/config/paths.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/functions.php';
 
-redirectIfNotLoggedIn();
+if (!isLoggedIn()) {
+    header("Location: /login.php");
+    exit;
+}
 
 $user_id = $_SESSION['user_id'];
 $errors = [];
 $success = '';
 
-// Обработка действий с корзиной
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        $product_id = intval($_POST['product_id'] ?? 0);
-        
+// --- ЛОГИКА КОРЗИНЫ ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    $product_id = intval($_POST['product_id'] ?? 0);
+    $redirect_url = $_SERVER['HTTP_REFERER'] ?? '/catalog.php';
+
+    try {
         switch ($_POST['action']) {
             case 'add':
                 $quantity = intval($_POST['quantity'] ?? 1);
-                
-                // Проверяем наличие товара
-                $stmt = $pdo->prepare("SELECT stock, price, name FROM Products WHERE product_id = ? AND is_active = 1");
+                if ($quantity < 1) $quantity = 1;
+
+                // 1. Проверяем реальный сток товара
+                $stmt = $pdo->prepare("SELECT stock FROM Products WHERE product_id = ? AND is_active = 1");
                 $stmt->execute([$product_id]);
-                $product = $stmt->fetch();
-                
-                if (!$product) {
-                    $errors[] = "Товар не найден";
-                } elseif ($product['stock'] < $quantity) {
-                    $errors[] = "Недостаточно товара на складе";
-                } else {
-                    // Проверяем, есть ли уже товар в корзине
-                    $stmt = $pdo->prepare("SELECT cart_item_id, quantity FROM CartItems WHERE user_id = ? AND product_id = ?");
-                    $stmt->execute([$user_id, $product_id]);
-                    $existing = $stmt->fetch();
-                    
-                    if ($existing) {
-                        $new_quantity = $existing['quantity'] + $quantity;
-                        if ($new_quantity > $product['stock']) {
-                            $errors[] = "Нельзя добавить больше товара, чем есть на складе";
-                        } else {
-                            $stmt = $pdo->prepare("UPDATE CartItems SET quantity = ?, updated_at = NOW() WHERE cart_item_id = ?");
-                            $stmt->execute([$new_quantity, $existing['cart_item_id']]);
-                            $success = "Товар обновлен в корзине";
-                        }
-                    } else {
-                        $stmt = $pdo->prepare("INSERT INTO CartItems (user_id, product_id, quantity) VALUES (?, ?, ?)");
-                        $stmt->execute([$user_id, $product_id, $quantity]);
-                        $success = "Товар добавлен в корзину";
-                    }
+                $product_stock = $stmt->fetchColumn();
+
+                if ($product_stock === false) {
+                    // Товар не найден
+                    break;
                 }
-                break;
-                
-            case 'update':
-                $quantity = intval($_POST['quantity'] ?? 1);
-                
-                if ($quantity <= 0) {
-                    $stmt = $pdo->prepare("DELETE FROM CartItems WHERE user_id = ? AND product_id = ?");
-                    $stmt->execute([$user_id, $product_id]);
-                    $success = "Товар удален из корзины";
-                } else {
-                    // Проверяем наличие
-                    $stmt = $pdo->prepare("SELECT stock FROM Products WHERE product_id = ? AND is_active = 1");
-                    $stmt->execute([$product_id]);
-                    $product = $stmt->fetch();
-                    
-                    if ($product && $quantity <= $product['stock']) {
-                        $stmt = $pdo->prepare("UPDATE CartItems SET quantity = ?, updated_at = NOW() WHERE user_id = ? AND product_id = ?");
-                        $stmt->execute([$quantity, $user_id, $product_id]);
-                        $success = "Количество обновлено";
-                    } else {
-                        $errors[] = "Недостаточно товара на складе";
-                    }
-                }
-                break;
-                
-            case 'remove':
-                $stmt = $pdo->prepare("DELETE FROM CartItems WHERE user_id = ? AND product_id = ?");
+
+                // 2. Проверяем, есть ли УЖЕ этот товар в корзине
+                $stmt = $pdo->prepare("SELECT cart_item_id, quantity FROM CartItems WHERE user_id = ? AND product_id = ?");
                 $stmt->execute([$user_id, $product_id]);
-                $success = "Товар удален из корзины";
-                break;
+                $existing_item = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($existing_item) {
+                    // ОБНОВЛЕНИЕ: Складываем старое кол-во + новое
+                    $new_qty = $existing_item['quantity'] + $quantity;
+                    
+                    // Не даем добавить больше, чем есть на складе
+                    if ($new_qty > $product_stock) {
+                        $new_qty = $product_stock;
+                    }
+
+                    $pdo->prepare("UPDATE CartItems SET quantity = ? WHERE cart_item_id = ?")
+                        ->execute([$new_qty, $existing_item['cart_item_id']]);
+                } else {
+                    // ВСТАВКА: Если товара в корзине нет
+                    if ($quantity > $product_stock) {
+                        $quantity = $product_stock;
+                    }
+                    $pdo->prepare("INSERT INTO CartItems (user_id, product_id, quantity) VALUES (?, ?, ?)")
+                        ->execute([$user_id, $product_id, $quantity]);
+                }
                 
+                // Перенаправляем назад
+                header("Location: " . $redirect_url);
+                exit;
+
+            case 'update':
+                $quantity = intval($_POST['quantity']);
+                if ($quantity > 0) {
+                    $stmt = $pdo->prepare("SELECT stock FROM Products WHERE product_id = ?");
+                    $stmt->execute([$product_id]);
+                    $stock = $stmt->fetchColumn();
+                    
+                    if ($quantity <= $stock) {
+                        $pdo->prepare("UPDATE CartItems SET quantity = ? WHERE user_id = ? AND product_id = ?")->execute([$quantity, $user_id, $product_id]);
+                    }
+                }
+                break;
+
+            case 'remove':
+                $pdo->prepare("DELETE FROM CartItems WHERE user_id = ? AND product_id = ?")->execute([$user_id, $product_id]);
+                break;
+
             case 'clear':
-                $stmt = $pdo->prepare("DELETE FROM CartItems WHERE user_id = ?");
-                $stmt->execute([$user_id]);
-                $success = "Корзина очищена";
+                $pdo->prepare("DELETE FROM CartItems WHERE user_id = ?")->execute([$user_id]);
                 break;
         }
+    } catch (Exception $e) {
+        // Логирование ошибок
     }
 }
 
-// Получение содержимого корзины
+// --- ВЫВОД КОРЗИНЫ ---
 $stmt = $pdo->prepare("
     SELECT ci.*, p.name, p.model, p.price, p.stock, p.image_url, b.name as brand_name 
     FROM CartItems ci 
     JOIN Products p ON ci.product_id = p.product_id 
     LEFT JOIN Brands b ON p.brand_id = b.brand_id 
-    WHERE ci.user_id = ? AND p.is_active = 1
-    ORDER BY ci.added_at DESC
+    WHERE ci.user_id = ?
 ");
 $stmt->execute([$user_id]);
 $cart_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Подсчет общего количества и суммы
-$total_quantity = 0;
 $total_amount = 0;
-
+$total_qty = 0;
 foreach ($cart_items as $item) {
-    $total_quantity += $item['quantity'];
     $total_amount += $item['quantity'] * $item['price'];
+    $total_qty += $item['quantity'];
 }
-
-// Обновляем счетчик в сессии
-$_SESSION['cart_count'] = $total_quantity;
+$_SESSION['cart_count'] = $total_qty;
 ?>
 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Корзина</title>
-    <link rel="stylesheet" href="<?= ASSETS_URL ?>css.css">
+    <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/blocks/header.php'; ?>
+    <?php require_once __DIR__ . '/header.php'; ?>
 
-    <div class="account-container">
-        <div class="sidebar">
-            <h3>Личный кабинет</h3>
-            <ul>
-                <li><a href="<?= ACCOUNT_URL ?>">Профиль</a></li>
-                <li><a href="<?= BALANCE_URL ?>">Баланс</a></li>
-                <li><a href="<?= ORDERS_URL ?>">Мои заказы</a></li>
-                <li><a href="<?= CART_URL ?>" class="active">Корзина</a></li>
-                <?php if (isAdmin()): ?>
-                    <li><a href="<?= ADMIN_URL ?>">Админ панель</a></li>
-                <?php endif; ?>
-            </ul>
-        </div>
+    <div class="container-wrap">
+        <div class="layout-container">
+            <?php $current_page = 'cart'; require_once __DIR__ . '/sidebar_user.php'; ?>
 
-        <div class="main-content">
-            <h1>Корзина</h1>
+            <div class="content-area">
+                <h1>Корзина покупок</h1>
 
-            <?php if ($success): ?>
-                <div class="alert success"><?= $success ?></div>
-            <?php endif; ?>
+                <?php if (empty($cart_items)): ?>
+                    <div class="content-card" style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 60px; margin-bottom: 20px;">🛒</div>
+                        <h3>Ваша корзина пуста</h3>
+                        <p style="color: #777; margin-bottom: 30px;">Посмотрите наш каталог, там много интересного!</p>
+                        <a href="/catalog.php" class="btn-primary">Перейти в каталог</a>
+                    </div>
+                <?php else: ?>
+                    <div class="content-card">
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Товар</th>
+                                        <th>Цена</th>
+                                        <th>Кол-во</th>
+                                        <th>Итого</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($cart_items as $item): ?>
+                                        <tr>
+                                            <td style="display: flex; gap: 20px; align-items: center;">
+                                                <?php if($item['image_url']): ?>
+                                                    <img src="<?= $item['image_url'] ?>" class="img-thumbnail" style="width: 70px; height: 70px;">
+                                                <?php else: ?>
+                                                    <div style="width:70px; height:70px; background:#f5f5f5; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">Нет фото</div>
+                                                <?php endif; ?>
+                                                <div>
+                                                    <div style="font-weight: bold; font-size: 15px;"><?= htmlspecialchars($item['name']) ?></div>
+                                                    <small style="color: #777;"><?= htmlspecialchars($item['brand_name'] . ' ' . $item['model']) ?></small>
+                                                </div>
+                                            </td>
+                                            <td><?= formatPrice($item['price']) ?></td>
+                                            <td>
+                                                <form method="post" class="quantity-wrapper"> <input type="hidden" name="action" value="update">
+                                                    <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                                    
+                                                    <button type="submit" name="quantity" value="<?= $item['quantity'] - 1 ?>" class="quantity-btn">-</button>
+                                                    
+                                                    <input type="text" value="<?= $item['quantity'] ?>" readonly class="quantity-input-styled">
+                                                    
+                                                    <button type="submit" name="quantity" value="<?= $item['quantity'] + 1 ?>" class="quantity-btn">+</button>
+                                                </form>
+                                            </td>
+                                            <td style="font-weight: bold; color: #0156FF; font-size: 16px;">
+                                                <?= formatPrice($item['price'] * $item['quantity']) ?>
+                                            </td>
+                                            <td>
+                                                <form method="post">
+                                                    <input type="hidden" name="action" value="remove">
+                                                    <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                                    <button type="submit" class="btn-small btn-danger" title="Удалить">✕</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
 
-            <?php if (!empty($errors)): ?>
-                <div class="alert error">
-                    <?php foreach ($errors as $error): ?>
-                        <p><?= htmlspecialchars($error) ?></p>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (empty($cart_items)): ?>
-                <div class="alert info">
-                    <h3>Корзина пуста</h3>
-                    <p>Добавьте товары из <a href="/catalog.php">каталога</a></p>
-                </div>
-            <?php else: ?>
-                <div class="cart-items">
-                    <?php foreach ($cart_items as $item): ?>
-                        <div class="cart-item">
-                            <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                                <?php if (!empty($item['image_url'])): ?>
-                                    <img src="<?= htmlspecialchars($item['image_url']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" style="width: 80px; height: 80px; object-fit: contain;">
-                                <?php else: ?>
-                                    <div style="width: 80px; height: 80px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #ccc; border-radius: 4px; font-size: 12px;">
-                                        Нет фото
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="cart-item-info">
-                                    <div style="font-weight: bold;"><?= htmlspecialchars($item['name']) ?></div>
-                                    <div style="color: #666; font-size: 14px;"><?= htmlspecialchars($item['brand_name'] ?? '') ?> <?= htmlspecialchars($item['model']) ?></div>
-                                    <div style="color: #0156FF; font-weight: bold; margin-top: 5px;">
-                                        <?= number_format($item['price'], 2) ?> руб. × <?= $item['quantity'] ?> = 
-                                        <?= number_format($item['price'] * $item['quantity'], 2) ?> руб.
-                                    </div>
-                                    <div style="color: #28a745; font-size: 12px; margin-top: 5px;">
-                                        В наличии: <?= $item['stock'] ?> шт.
-                                    </div>
-                                </div>
-                            </div>
+                        <div style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                            <form method="post">
+                                <button type="submit" name="action" value="clear" class="btn-small btn-danger" onclick="return confirm('Очистить корзину?')">Очистить корзину</button>
+                            </form>
                             
-                            <div class="cart-item-actions">
-                                <form method="post" class="quantity-controls">
-                                    <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                    <button type="submit" name="action" value="update" class="quantity-btn" onclick="this.form.querySelector('input[name=quantity]').value = <?= $item['quantity'] - 1 ?>">-</button>
-                                    <input type="number" name="quantity" value="<?= $item['quantity'] ?>" min="1" max="<?= $item['stock'] ?>" class="quantity-input" onchange="this.form.submit()">
-                                    <button type="submit" name="action" value="update" class="quantity-btn" onclick="this.form.querySelector('input[name=quantity]').value = <?= $item['quantity'] + 1 ?>">+</button>
-                                </form>
-                                
-                                <form method="post">
-                                    <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                    <button type="submit" name="action" value="remove" class="btn-small btn-danger" onclick="return confirm('Удалить товар из корзины?')">Удалить</button>
-                                </form>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.1em; margin-bottom: 5px; color: #666;">Итого к оплате:</div>
+                                <div style="font-size: 2em; font-weight: bold; color: #0156FF; margin-bottom: 20px;"><?= formatPrice($total_amount) ?></div>
+                                <a href="checkout.php" class="btn-primary" style="font-size: 1.1em; padding: 12px 30px;">Оформить заказ</a>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-
-                <div class="cart-summary">
-                    <h3>Итого</h3>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                        <span>Товаров:</span>
-                        <span><?= $total_quantity ?> шт.</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.2em; font-weight: bold;">
-                        <span>Общая сумма:</span>
-                        <span><?= number_format($total_amount, 2) ?> руб.</span>
-                    </div>
-                    
-                     <div style="display: flex; gap: 15px;">
-                    <form method="post">
-                        <button type="submit" name="action" value="clear" class="btn-danger" onclick="return confirm('Очистить всю корзину?')">Очистить корзину</button>
-                    </form>
-                    <a href="<?= CHECKOUT_URL ?>" class="btn-primary">Оформить заказ</a>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
-    <?php require_once __DIR__ . '/blocks/footer.php'; ?>
+    <?php require_once __DIR__ . '/footer.php'; ?>
 </body>
 </html>

@@ -1,15 +1,49 @@
-/* css.css - объединенный файл стилей */
-
-/* СБРОС И БАЗОВЫЕ СТИЛИ */
+/* =========================================
+   1. СБРОС И БАЗОВЫЕ СТИЛИ
+   ========================================= */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    height: 100%;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Контейнер для центрирования */
+.container-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+/* Основной контент растягивается */
+main, .main-wrapper, .admin-main, .main-content, .content-area {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+}
+
+footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    background-color: #020203;
+    color: #fff;
+    padding-top: 40px;
+    width: 100%;
 }
 
 img {
@@ -18,169 +52,38 @@ img {
     display: block;
 }
 
-/* СТИЛИ HEADER */
-.topheader {
+a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.2s ease;
+}
+
+/* Глобальный сброс списков */
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* =========================================
+   2. ЛЕЙАУТ СТРАНИЦ С САЙДБАРОМ
+   ========================================= */
+.layout-container {
     display: flex;
-    justify-content: space-between;
-    background-color: #020202;
-    color: #fff;
-    padding: 15px 5%;
-}
-
-.topheader div {
-    opacity: 50%;
-}
-
-.bottomheader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: thin solid #CACDD8;
-    color: black;
-    padding: 15px 5%;
-}
-
-.bottomheader > div:not(.userheaderinfo) {
-    cursor: pointer;
-    padding: 5px 10px;
-}
-
-.bottomheader > div:not(.userheaderinfo):hover {
-    color: #0156FF;
-}
-
-/* Логотип в header */
-.bottomheader > a > img {
-    max-width: 120px;
-    height: auto;
-}
-
-/* СТИЛИ FOOTER */
-footer {
-    background-color: #020203;
-    color: #fff;
-    padding-top: 50px;
-}
-
-.bottomfooter {
-    display: flex;
-    justify-content: space-between;
-    margin: 0% 5%;
-    padding: 15px 0px;
-    opacity: 50%;
-    border-top: #fff solid thin;
-}
-
-.topfooter {
-    display: flex;
-    justify-content: space-between;
-    padding: 20px 5%;
-}
-
-.topfooter button {
-    border-radius: 200px;
-    border-style: solid;
-    border-width: 1px;
-    padding: 10px 15px;
-    background-color: #0156FF;
-    border-color: #0156FF;
-    color: #fff;
-    font-weight: 700;
-    margin-left: 25px;
-}
-
-.topfooter input {
-    padding: 10px 80px;
-    background-color: #000;
-    color: #fff;
-    border: #fff solid thin;
-    border-radius: 3px;
-}
-
-/* СТИЛИ АВАТАРОК */
-.avatar-container {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid #0156FF;
-    flex-shrink: 0;
-    margin-bottom: 20px;
-}
-
-.avatar-image, .avatar-small {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.avatar-placeholder {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: #0156FF;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 48px;
-    font-weight: bold;
-}
-
-/* Аватарка в header */
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid #0156FF;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.avatar-placeholder-small {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #0156FF;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: bold;
-    flex-shrink: 0;
-}
-
-/* Иконки в header */
-.userheaderinfo img:not(.avatar-small) {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-}
-
-/* СТИЛИ ПРОФИЛЯ И АДМИНКИ */
-.account-container, .admin-container {
-    display: flex;
-    max-width: 1200px;
-    margin: 40px auto;
     gap: 30px;
-    padding: 0 20px;
+    margin-top: 40px;
+    margin-bottom: 40px;
+    align-items: flex-start;
 }
 
-.admin-container {
-    max-width: 1400px;
-}
-
+/* --- ИСПРАВЛЕННЫЙ САЙДБАР --- */
 .sidebar, .admin-sidebar {
-    width: 250px;
+    width: 260px;
     background: white;
-    padding: 20px;
+    padding: 25px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    flex-shrink: 0; /* Не даем сайдбару сжиматься */
 }
 
 .admin-sidebar {
@@ -188,675 +91,1057 @@ footer {
     color: white;
 }
 
+/* Заголовки меню */
 .sidebar h3, .admin-sidebar h3 {
-    margin-bottom: 20px;
-    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px; /* Отступ до списка */
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 1.1em;
+    line-height: 1.2;
 }
 
 .admin-sidebar h3 {
-    color: white;
+    border-bottom-color: #34495e;
+    color: #ecf0f1;
 }
 
+/* Списки в меню (ВАЖНО: PADDING 0) */
 .sidebar ul, .admin-sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    list-style: none !important;
+    padding-left: 0 !important;
+    margin: 0 !important;
 }
 
 .sidebar li, .admin-sidebar li {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    padding: 0;
 }
 
+/* Ссылки меню */
 .sidebar a, .admin-sidebar a {
     display: block;
-    padding: 10px;
-    color: #555;
+    padding: 12px 15px; /* Чуть больше воздуха */
     text-decoration: none;
-    border-radius: 4px;
-    transition: background-color 0.3s;
+    border-radius: 6px;
+    font-weight: 500;
 }
 
-.admin-sidebar a {
-    color: #bdc3c7;
+.sidebar a { color: #555; }
+.admin-sidebar a { color: #bdc3c7; }
+
+/* Активное состояние */
+.sidebar a:hover, .sidebar a.active {
+    background: #f0f7ff;
+    color: #0156FF;
 }
 
-.sidebar a:hover,
-.sidebar a.active,
-.admin-sidebar a:hover,
-.admin-sidebar a.active {
-    background-color: #0156FF;
+.admin-sidebar a:hover, .admin-sidebar a.active {
+    background: #0156FF;
     color: white;
 }
 
-.admin-sidebar a:hover,
-.admin-sidebar a.active {
-    background-color: #34495e;
+/* =========================================
+   3. HEADER (ШАПКА)
+   ========================================= */
+header {
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    z-index: 100;
+    position: relative;
 }
 
-.main-content, .admin-main {
-    flex: 1;
+.topheader {
+    background-color: #020202;
+    color: #fff;
+    font-size: 0.9em;
 }
 
-.main-content h1 {
-    margin-bottom: 30px;
+.topheader-inner {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.bottomheader {
+    border-bottom: 1px solid #CACDD8;
+    background: #fff;
+}
+
+.bottomheader-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+    margin: 0 20px;
+}
+
+.nav-links a div {
+    font-weight: 500;
     color: #333;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+.nav-links a:hover div { color: #0156FF; }
+
+/* Блок пользователя */
+.userheaderinfo {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
 }
 
-/* СЕКЦИИ ПРОФИЛЯ */
-.profile-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 30px;
+.cart-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.avatar-section,
-.profile-info,
-.balance-card {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+.cart-badge {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #dc3545; color: white;
+    border-radius: 50%; padding: 2px 6px;
+    font-size: 11px; font-weight: bold; min-width: 18px; text-align: center;
 }
 
-.avatar-section h3,
-.profile-info h3,
-.balance-card h3 {
-    margin-bottom: 20px;
-    color: #333;
+.avatar-small {
+    width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #e0e0e0; display: block;
+}
+.avatar-placeholder-small {
+    width: 32px; height: 32px; background: #0156FF; color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
 }
 
-.avatar-form {
-    max-width: 100%;
+.user-dropdown {
+    display: flex; align-items: center; position: relative; cursor: pointer; gap: 10px;
 }
-
-/* ФОРМЫ И ИНПУТЫ */
-.form-group {
-    margin-bottom: 15px;
+.dropdown-content {
+    display: none; position: absolute; top: 100%; right: 0;
+    background: white; min-width: 220px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 4px;
+    z-index: 1000; margin-top: 10px; border: 1px solid #eee;
 }
+.user-dropdown:hover .dropdown-content { display: block; }
+.dropdown-content a, .dropdown-content div { display: block; padding: 12px 15px; color: #333; border-bottom: 1px solid #f5f5f5; }
+.dropdown-content a:hover { background: #f8f9fa; color: #0156FF; }
 
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #555;
-}
-
-.form-group input[type="file"],
-.form-group input[type="number"],
-.form-group input[type="text"],
-.form-group input[type="email"],
-.form-group input[type="password"] {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-}
-
-.form-group input[type="file"] {
-    padding: 8px;
-}
-
-.balance-form input[type="number"] {
-    width: 200px;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #0156FF;
-}
-
-.form-group small {
-    color: #666;
-    font-size: 12px;
-    display: block;
-    margin-top: 5px;
-}
-
-/* КНОПКИ */
-.btn-primary, .register-btn {
-    background-color: #0156FF;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
-    display: inline-block;
-    text-decoration: none;
-}
-
-.btn-primary:hover, .register-btn:hover {
-    background-color: #0141cc;
+/* =========================================
+   4. UI КОМПОНЕНТЫ
+   ========================================= */
+.content-card, .product-card, .import-form, .product-main {
+    background: white; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); padding: 30px; margin-bottom: 30px;
 }
 
 .btn-primary {
-    width: auto;
+    background: #0156FF; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: inline-block; font-weight: 600; text-align: center;
+}
+.btn-primary:hover { background: #0046d1; }
+
+.btn-small {
+    padding: 6px 12px; font-size: 12px; border-radius: 4px; color: white; background: #6c757d; cursor: pointer; border: none; display: inline-block; text-decoration: none;
+}
+.btn-danger { background: #dc3545; }
+.btn-success { background: #28a745; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; font-size: 14px;
+}
+.form-group input:focus { border-color: #0156FF; outline: none; }
+.form-row { display: flex; gap: 20px; flex-wrap: wrap; }
+.form-row .form-group { flex: 1; min-width: 200px; }
+
+/* === НОВОЕ: КРАСИВАЯ КНОПКА ЗАГРУЗКИ ФАЙЛА === */
+.file-upload-wrapper { position: relative; display: inline-block; width: 100%; }
+.file-upload-wrapper input[type="file"] {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+}
+.btn-file-custom {
+    display: block; padding: 12px 20px; background-color: #f8f9fa; border: 1px dashed #0156FF; border-radius: 6px; color: #0156FF; cursor: pointer; font-weight: 500; transition: all 0.2s; text-align: center; width: 100%;
+}
+.btn-file-custom:hover { background-color: #e3efff; border-color: #0046d1; }
+
+/* Алерты */
+.alert { padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+.alert.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.alert.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.alert.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+/* Таблицы */
+.data-table table, .users-table table, .orders-table table {
+    width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;
+}
+.data-table th, .users-table th, .orders-table th {
+    background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #444; border-bottom: 1px solid #eee;
+}
+.data-table td, .users-table td, .orders-table td { padding: 15px; border-bottom: 1px solid #eee; }
+.img-thumbnail { width: 60px; height: 60px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; background: #fff; }
+
+/* =========================================
+   5. ДАШБОРД (GRID)
+   ========================================= */
+.stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 30px; width: 100%;
+}
+.stat-card {
+    background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee;
+}
+.stat-number { font-size: 2.5em; font-weight: bold; color: #0156FF; margin-top: 10px; }
+
+/* =========================================
+   6. ПРОФИЛЬ
+   ========================================= */
+.profile-grid {
+    display: grid; grid-template-columns: 280px 1fr; gap: 40px; align-items: start;
+}
+@media (max-width: 900px) { .profile-grid { grid-template-columns: 1fr; } }
+
+.avatar-section {
+    text-align: center; background: #fff; padding: 25px; border-radius: 8px; border: 1px solid #eee;
+}
+.avatar-large {
+    width: 180px; height: 180px; border-radius: 50%; object-fit: cover; border: 4px solid #f0f0f0; margin: 0 auto 20px auto; display: block;
+}
+.avatar-placeholder-large {
+    width: 180px; height: 180px; background: #0156FF; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: bold; margin: 0 auto 20px auto;
 }
 
-.register-btn {
+.info-item {
+    display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee;
+}
+
+/* Статус верификации */
+.verification-badge {
+    padding: 15px; border-radius: 6px; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;
+}
+.verification-badge.verified { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+.verification-badge.unverified { background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+.verification-icon { font-size: 24px; }
+
+/* =========================================
+   7. КАТАЛОГ И ТОВАР
+   ========================================= */
+/* =========================================
+   7. СТРАНИЦА ТОВАРА (ОБНОВЛЕНО)
+   ========================================= */
+.product-main {
+    display: flex;
+    gap: 40px;
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    align-items: flex-start;
+}
+
+/* Галерея и Плейсхолдер */
+.product-gallery {
+    flex: 1;
+    max-width: 500px;
     width: 100%;
 }
 
+.product-gallery img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+}
+
+/* ИСПРАВЛЕНИЕ ПЛЕЙСХОЛДЕРА */
+.product-image-placeholder-large {
+    width: 100%;
+    height: 400px; /* Фиксированная высота, как у нормальных фото */
+    background-color: #f8f9fa;
+    color: #999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    font-size: 1.2em;
+    font-weight: 500;
+}
+
+.product-details { flex: 1; }
+.product-title { font-size: 28px; margin: 10px 0; color: #222; line-height: 1.3; }
+.product-brand { color: #0156FF; font-weight: 600; text-transform: uppercase; font-size: 0.9em; letter-spacing: 1px; }
+.product-price-large { font-size: 36px; color: #333; font-weight: bold; margin: 20px 0; }
+
+.stock-status {
+    padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-block; margin-bottom: 15px;
+}
+.in-stock { background: #d4edda; color: #155724; }
+.out-of-stock { background: #f8d7da; color: #721c24; }
+
+/* Красивая таблица характеристик */
+.specs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+.specs-table tr {
+    border-bottom: 1px solid #eee;
+}
+.specs-table tr:last-child {
+    border-bottom: none;
+}
+.specs-table th {
+    text-align: left;
+    padding: 12px 0;
+    color: #666;
+    font-weight: 500;
+    width: 40%;
+}
+.specs-table td {
+    padding: 12px 0;
+    color: #333;
+    font-weight: 600;
+}
+
+/* Разделители секций */
+.section-title {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    color: #333;
+}
+
+/* Отзывы */
+.review-item {
+    padding: 20px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.review-item:last-child { border-bottom: none; }
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.review-author { font-weight: bold; font-size: 1.1em; }
+.review-date { color: #999; font-size: 0.9em; }
+.review-stars { color: #ffc107; letter-spacing: 2px; }
+.review-text { line-height: 1.6; color: #555; } 
+
+/* =========================================
+   8. ФУТЕР
+   ========================================= */
+.topfooter-inner { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; flex-wrap: wrap; gap: 20px; }
+.bottomfooter { border-top: 1px solid #333; padding: 20px 0; opacity: 0.6; font-size: 0.9em; }
+
+/* =========================================
+   9. АДАПТИВНОСТЬ
+   ========================================= */
+@media (max-width: 992px) { .product-main { flex-direction: column; } .product-gallery { max-width: 100%; } }
+@media (max-width: 768px) {
+    .layout-container { flex-direction: column; }
+    .sidebar, .admin-sidebar { width: 100%; margin-bottom: 20px; }
+    .catalog-header { flex-direction: column; align-items: stretch; }
+    .search-form { max-width: 100%; }
+    .form-row { flex-direction: column; gap: 0; }
+    .topheader-inner, .bottomheader-inner, .topfooter-inner { flex-direction: column; align-items: center; text-align: center; }
+}
+
+/* =========================================
+   8. КАТАЛОГ (УЛУЧШЕННЫЙ ДИЗАЙН)
+   ========================================= */
+.catalog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.search-form { display: flex; gap: 10px; flex: 1; max-width: 600px; }
+.search-form input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.categories {
+    display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;
+}
+.category-btn {
+    padding: 8px 18px;
+    border: 1px solid #e0e0e0;
+    border-radius: 25px;
+    background: white;
+    color: #555;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.category-btn:hover, .category-btn.active {
+    background: #0156FF;
+    color: white;
+    border-color: #0156FF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(1, 86, 255, 0.2);
+}
+
+/* === СЕТКА ТОВАРОВ === */
+.products-grid {
+    display: grid;
+    /* Увеличили минимальную ширину карточки для красоты */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.product-card {
+    background: white;
+    border: none; /* Убираем рамку, оставляем только тень */
+    border-radius: 12px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* Мягкая тень */
+    position: relative;
+    height: 100%;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.product-card a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Чтобы ссылка занимала всё место до кнопок */
+}
+
+.product-image-fixed {
+    width: 100%;
+    height: 200px; /* Чуть больше высота */
+    object-fit: contain;
+    margin-bottom: 20px;
+    /* transition: transform 0.3s ease; */
+}
+
+/* .product-card:hover .product-image-fixed {
+    transform: scale(1.05);
+} */
+
+.product-image-placeholder {
+    background: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    border: 1px dashed #e0e0e0;
+    height: 200px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.product-brand {
+    font-size: 11px;
+    color: #0156FF;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.product-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #222;
+    line-height: 1.4;
+    /* Ограничение названия в 2 строки */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-specs {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    flex-grow: 1; /* Растягиваем этот блок, чтобы цена прижалась вниз */
+}
+
+.product-price {
+    font-size: 1.4em;
+    font-weight: 800;
+    color: #222;
+    margin-top: 15px;
+    margin-bottom: 20px;
+}
+
+.product-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: auto; /* Прижимаем кнопки к низу карточки */
+}
+
+.product-actions .btn-primary {
+    flex: 1;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Фильтры */
+.sorting-filters {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+    align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    border: 1px solid #f0f0f0;
+}
+.price-range { display: flex; gap: 10px; align-items: center; }
+.price-range input {
+    width: 90px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;
+}
+
+header {
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    z-index: 100;
+    position: relative;
+}
+
+.topheader {
+    background-color: #020202;
+    color: #fff;
+    font-size: 0.9em;
+}
+
+.topheader-inner {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+}
+
+.bottomheader {
+    border-bottom: 1px solid #CACDD8;
+    background: #fff;
+}
+
+.bottomheader-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    flex-wrap: wrap;
+    gap: 20px; /* Отступы между блоками */
+}
+
+/* Навигация (Категории) */
+.nav-links {
+    display: flex;
+    gap: 25px; /* Чуть больше отступ для длинных названий */
+    margin: 0 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.nav-links a div {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    text-transform: uppercase;
+    white-space: nowrap; /* Чтобы не переносилось внутри слова */
+    transition: color 0.2s;
+}
+.nav-links a:hover div { color: #0156FF; }
+
+/* Правая часть хедера */
+.userheaderinfo {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Кнопки авторизации (для гостей) */
+.auth-links {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.auth-btn-login {
+    color: #0156FF;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 10px;
+}
+.auth-btn-login:hover { text-decoration: underline; }
+
+.auth-btn-register {
+    background-color: #0156FF;
+    color: white;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.auth-btn-register:hover {
+    background-color: #0046d1;
+    color: white;
+}
+
+/* ... (Оставьте всё, что было выше) ... */
+
+/* =========================================
+   12. СТИЛИ ДЛЯ СЧЕТЧИКА ТОВАРОВ
+   ========================================= */
+.quantity-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    width: fit-content;
+}
+
+.quantity-btn {
+    background: #f8f9fa;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #555;
+    transition: background 0.2s;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.quantity-btn:hover {
+    background: #e2e6ea;
+    color: #0156FF;
+}
+
+/* Убираем стрелочки у инпута */
+.quantity-input-styled {
+    width: 45px;
+    text-align: center;
+    border: none;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    outline: none;
+    font-size: 14px;
+    padding: 8px 0;
+    -moz-appearance: textfield;
+}
+.quantity-input-styled::-webkit-outer-spin-button,
+.quantity-input-styled::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ... (начало секции 2. HEADER без изменений) ... */
+
+/* Меню пользователя */
+.user-dropdown {
+    display: flex;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+    gap: 10px;
+    height: 100%; /* Важно: растягиваем контейнер на высоту хедера */
+    padding: 10px 0; /* Увеличиваем область наведения сверху и снизу */
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%; 
+    right: 0;
+    background: white;
+    min-width: 220px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    z-index: 1000;
+    /* margin-top создает дырку, из-за которой меню пропадает */
+    margin-top: 10px; 
+    border: 1px solid #eee;
+}
+
+/* === FIX: НЕВИДИМЫЙ МОСТ === */
+/* Создаем прозрачный блок над меню, чтобы закрыть дырку margin-top */
+.dropdown-content::before {
+    content: "";
+    position: absolute;
+    top: -20px; /* Высота мостика (должна быть больше margin-top) */
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: transparent; /* Он невидимый, но мышка его чувствует */
+}
+
+/* Показываем меню при наведении */
+.user-dropdown:hover .dropdown-content {
+    display: block;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.dropdown-content a {
+    display: block;
+    padding: 12px 15px;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+    text-decoration: none;
+}
+
+.dropdown-content a:hover {
+    background-color: #f8f9fa;
+    color: #0156FF;
+}
+
+/* Анимация появления */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ... (остальной CSS без изменений) ... */
+
+/* =========================================
+   6. ФУТЕР (ИСПРАВЛЕНО)
+   ========================================= */
+.topfooter {
+    padding: 20px 0; /* Внутренние отступы черной полосы */
+}
+
+.topfooter-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.topfooter h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.topfooter h3 {
+    font-size: 14px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin: 0;
+}
+
+/* Форма подписки */
+.subscribe-form {
+    display: flex;
+    gap: 10px;
+}
+
+.subscribe-form input[type="email"] {
+    padding: 12px 20px;
+    background-color: #000; /* Черный фон поля */
+    color: #fff;            /* Белый текст */
+    border: 1px solid #fff; /* Белая рамка */
+    border-radius: 4px;
+    min-width: 280px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.subscribe-form input[type="email"]::placeholder {
+    color: #aaa;
+}
+
+.subscribe-form input[type="email"]:focus {
+    border-color: #0156FF; /* Синяя рамка при фокусе */
+}
+
+.subscribe-form button {
+    padding: 12px 30px;
+    background-color: #0156FF;
+    border: 1px solid #0156FF;
+    color: #fff;
+    border-radius: 25px; /* Закругленная кнопка */
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background 0.3s, transform 0.2s;
+}
+
+.subscribe-form button:hover {
+    background-color: #0046d1;
+    border-color: #0046d1;
+    transform: translateY(-2px);
+}
+
+.bottomfooter {
+    border-top: 1px solid #333;
+    padding: 25px 0;
+    opacity: 0.6;
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* =========================================
+   13. СТРАНИЦЫ АВТОРИЗАЦИИ (LOGIN / REGISTER)
+   ========================================= */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    flex: 1; /* Растягивается, чтобы футер был внизу */
+    width: 100%;
+}
+
+.auth-form {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 400px; /* Узкая карточка */
+    border: 1px solid #f0f0f0;
+}
+
+.auth-form h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #333;
+    font-size: 24px;
+}
+
+.auth-links {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.auth-links a {
+    color: #0156FF;
+    font-weight: 600;
+}
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.resend-form {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 13px;
+}
 .btn-link {
     background: none;
     border: none;
     color: #0156FF;
     text-decoration: underline;
     cursor: pointer;
+    padding: 0;
     font-size: inherit;
 }
 
-.btn-link:hover {
-    color: #0141cc;
-}
-
-/* АУТЕНТИФИКАЦИЯ */
+/* =========================================
+   13. СТРАНИЦЫ АВТОРИЗАЦИИ (LOGIN / REGISTER)
+   ========================================= */
 .auth-container {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
+    justify-content: center; /* Центрируем по горизонтали */
+    align-items: flex-start; /* Прижимаем к верху с отступом */
+    padding-top: 80px;       /* Отступ сверху */
+    padding-bottom: 80px;
+    width: 100%;
+    min-height: 60vh;        /* Минимальная высота, чтобы футер не прилипал */
 }
 
 .auth-form {
     background: white;
     padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 12px;     /* Закругленные углы */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); /* Красивая тень */
+    border: 1px solid #f0f0f0;
+    
+    /* ГЛАВНОЕ: Ограничение ширины */
     width: 100%;
-    max-width: 400px;
+    max-width: 400px;        /* Форма не будет шире 400px */
 }
 
+/* Заголовок формы */
 .auth-form h2 {
+    margin-top: 0;
+    margin-bottom: 25px;
     text-align: center;
-    margin-bottom: 30px;
+    font-size: 24px;
     color: #333;
 }
 
+/* Ссылки снизу (Нет аккаунта?) */
 .auth-links {
-    display: flex;
-    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
     text-align: center;
-    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
 }
 
 .auth-links a {
     color: #0156FF;
-    text-decoration: none;
+    font-weight: 600;
 }
 
 .auth-links a:hover {
     text-decoration: underline;
 }
 
-.login-btn {
-    padding: 8px 15px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 14px;
-    transition: background-color 0.3s;
-    color: #0156FF;
-    border: 1px solid #0156FF;
-}
-
-.login-btn:hover {
-    background-color: rgb(223, 223, 223);
-}
-
-/* ИНФОРМАЦИЯ ПРОФИЛЯ */
-.info-grid {
-    display: grid;
-    gap: 15px;
-}
-
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.info-item label {
-    font-weight: bold;
-    color: #555;
-}
-
-.info-item span {
-    color: #333;
-}
-
-.balance-amount {
-    font-size: 2.5em;
-    font-weight: bold;
-    color: #0156FF;
-    margin: 20px 0;
-}
-
-.balance-form {
-    margin-top: 20px;
-}
-
-/* УВЕДОМЛЕНИЯ */
-.alert {
-    padding: 12px;
-    border-radius: 4px;
-    margin: 15px 0;
-}
-
-.alert.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alert.error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.alert.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-}
-
-.alert.info {
-    background-color: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
-
-.verification-required {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    border: 2px dashed #dee2e6;
-}
-
-.verification-required p {
-    margin-bottom: 15px;
-    color: #6c757d;
-}
-
+/* Кнопка "отправить код повторно" */
 .resend-form {
     text-align: center;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
+    margin-top: 15px;
+    font-size: 13px;
 }
-
-/* АДМИН ПАНЕЛЬ */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.stat-number {
-    font-size: 2em;
-    font-weight: bold;
+.btn-link {
+    background: none;
+    border: none;
     color: #0156FF;
-    margin-top: 10px;
-}
-
-.users-table {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.users-table table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.users-table th,
-.users-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.users-table th {
-    background-color: #f8f9fa;
-    font-weight: bold;
-}
-
-/* ВЫПАДАЮЩИЕ МЕНЮ */
-.userheaderinfo {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.user-dropdown {
-    display: flex;
-    align-items: center;
-    position: relative;
+    text-decoration: underline;
     cursor: pointer;
+    padding: 0;
+}
+
+/* ... (внутри секции 2. HEADER) ... */
+
+/* === ИСПРАВЛЕНИЕ: КНОПКИ АВТОРИЗАЦИИ В ШАПКЕ === */
+/* Контейнер кнопок (отдельный класс, чтобы не было конфликтов с формами) */
+.header-auth {
+    display: flex;
+    gap: 15px; /* Расстояние между кнопками */
+    align-items: center;
+    border: none; /* Убираем любые границы */
+    padding: 0;
+    margin: 0;
+}
+
+/* Кнопка "Войти" */
+.auth-btn-login {
+    color: #333; /* Темный цвет для контраста */
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 14px;
     padding: 5px 10px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-    gap: 8px;
+    transition: color 0.2s;
+}
+.auth-btn-login:hover {
+    color: #0156FF; /* Синий при наведении */
 }
 
-.user-dropdown:hover {
-    background-color: #f5f5f5;
+/* Кнопка "Регистрация" */
+.auth-btn-register {
+    background-color: #0156FF;
+    color: #ffffff !important; /* Принудительно белый текст */
+    padding: 8px 20px;
+    border-radius: 20px;       /* Овальная форма */
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 4px 10px rgba(1, 86, 255, 0.2); /* Красивая тень */
+    border: none; /* Убираем рамки */
 }
 
-.user-name {
+.auth-btn-register:hover {
+    background-color: #0046d1;
+    transform: translateY(-1px);
+    color: #fff !important;
+}
+
+
+/* =========================================
+   14. КОНФИГУРАТОР (CONFIGURATOR)
+   ========================================= */
+.config-step {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed #eee;
+    transition: opacity 0.3s;
+}
+
+.config-step:last-child {
+    border-bottom: none;
+}
+
+.config-step h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
     color: #333;
-    font-weight: 500;
+    font-size: 18px;
 }
 
-.dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    min-width: 200px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    z-index: 1000;
-    margin-top: 10px;
+.config-select {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    cursor: pointer;
 }
 
-.user-dropdown:hover .dropdown-content {
+.config-select:focus {
+    border-color: #0156FF;
+    outline: none;
+}
+
+.disabled-step {
+    opacity: 0.5;
+    pointer-events: none; /* Блокируем клики */
+}
+
+.hint {
+    color: #999;
+    font-style: italic;
+    margin-top: 5px;
     display: block;
 }
 
-.dropdown-content a {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    color: #333;
-    text-decoration: none;
-    border-bottom: 1px solid #eee;
-    transition: background-color 0.3s;
-}
-
-.dropdown-content a:hover {
-    background-color: #f5f5f5;
-}
-
-.dropdown-content a:last-child {
-    border-bottom: none;
-}
-
-/* АДАПТИВНОСТЬ */
-@media (max-width: 768px) {
-    .account-container,
-    .admin-container {
-        flex-direction: column;
-    }
-    
-    .sidebar,
-    .admin-sidebar {
-        width: 100%;
-    }
-    
-    .profile-section {
-        grid-template-columns: 1fr;
-    }
-    
-    .user-dropdown {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .user-name {
-        margin-left: 0;
-        margin-top: 5px;
-    }
-    
-    .balance-form input[type="number"] {
-        width: 100%;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Сортировка и фильтры */
-.sorting-filters {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.sort-select, .filter-select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-}
-
-.price-range {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.price-range input {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    width: 100px;
-}
-
-/* Корзина */
-.cart-badge {
-    background: #dc3545;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 12px;
-    position: absolute;
-    top: -8px;
-    right: -8px;
-}
-
-.cart-icon {
-    position: relative;
-    cursor: pointer;
-}
-
-.cart-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.cart-item-info {
-    flex: 1;
-}
-
-.cart-item-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.quantity-btn {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.quantity-input {
-    width: 50px;
-    text-align: center;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.cart-summary {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-/* Заказы */
-.order-status {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.status-pending { background: #fff3cd; color: #856404; }
-.status-confirmed { background: #d1ecf1; color: #0c5460; }
-.status-completed { background: #d4edda; color: #155724; }
-.status-cancelled { background: #f8d7da; color: #721c24; }
-
-.order-actions {
-    display: flex;
-    gap: 5px;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .sorting-filters {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .price-range {
-        justify-content: space-between;
-    }
-    
-    .cart-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .cart-item-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
-
-/* Фиксированные размеры изображений товаров */
-.product-image-fixed {
-    width: 200px;
-    height: 200px;
-    object-fit: contain;
-    background: #f8f9fa;
-    border-radius: 4px;
-    margin-bottom: 15px;
-}
-
-.product-image-placeholder {
-    width: 200px;
-    height: 200px;
-    background: #f8f9fa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ccc;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    border: 2px dashed #ddd;
-}
-
-/* Админские стили для отзывов */
-.reviews-admin-table {
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin-top: 20px;
-}
-
-.review-admin-item {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-}
-
-.review-admin-item:last-child {
-    border-bottom: none;
-}
-
-.review-meta {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    font-size: 14px;
-    color: #666;
-}
-
-.review-content {
-    margin-bottom: 10px;
-}
-
-.review-actions {
-    display: flex;
-    gap: 10px;
-}
-
-/* Форма загрузки изображения товара */
-.image-upload-form {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-top: 20px;
-}
-
-.image-preview {
-    width: 200px;
-    height: 200px;
-    border: 2px dashed #ddd;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-    overflow: hidden;
-}
-
-.image-preview img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+.summary-card {
+    background-color: #f0f7ff; /* Светло-синий фон для итога */
+    border: 1px solid #cce5ff;
 }

@@ -1,5 +1,11 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/functions.php';
+
+if (isLoggedIn()) {
+    header("Location: /account.php");
+    exit;
+}
 
 $errors = [];
 
@@ -8,28 +14,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     if (empty($email) || empty($password)) {
-        $errors[] = "Все поля обязательны для заполнения";
-    }
-
-    if (empty($errors)) {
+        $errors[] = "Введите email и пароль";
+    } else {
         try {
             $stmt = $pdo->prepare("SELECT user_id, email, password_hash, first_name, role FROM Users WHERE email = ? AND is_active = 1");
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password_hash'])) {
+                if (session_status() === PHP_SESSION_NONE) session_start();
                 $_SESSION['user_id'] = $user['user_id'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_role'] = $user['role'];
                 $_SESSION['first_name'] = $user['first_name'];
                 
-                header("Location: /");
+                header("Location: /account.php");
                 exit;
             } else {
-                $errors[] = "Неверный email или пароль";
+                $errors[] = "Неверный логин или пароль";
             }
         } catch (PDOException $e) {
-            $errors[] = "Ошибка базы данных";
+            $errors[] = "Ошибка сервера";
         }
     }
 }
@@ -39,11 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в систему</title>
+    <title>Вход</title>
     <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
+    <?php require_once __DIR__ . '/header.php'; ?>
+
     <div class="auth-container">
         <div class="auth-form">
             <h2>Вход в систему</h2>
@@ -67,13 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="password" name="password" required>
                 </div>
 
-                <button type="submit" class="btn-primary">Войти</button>
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 16px;">Войти</button>
             </form>
 
             <div class="auth-links">
-                <a href="/register.php">Нет аккаунта? Зарегистрироваться</a>
+                <a href="/register.php">Регистрация</a>
             </div>
         </div>
     </div>
+
+    <?php require_once __DIR__ . '/footer.php'; ?>
 </body>
 </html>

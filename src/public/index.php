@@ -1,8 +1,7 @@
 <?php
-require_once __DIR__ . '/config/database.php';
-require_once __DIR__ . '/auth/functions.php';
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/functions.php';
 
-// Получаем случайные товары
 $stmt = $pdo->query("
     SELECT p.*, b.name as brand_name 
     FROM Products p 
@@ -25,7 +24,7 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
     <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
-    <?php require_once 'blocks/header.php'; ?>
+    <?php require_once 'header.php'; ?>
     
     <main style="padding: 40px 5%; min-height: 60vh;">
         <h1>Добро пожаловать в магазин компьютерных комплектующих</h1>
@@ -35,21 +34,19 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
             <div style="text-align: center; margin-top: 50px;">
                 <h2>Начните покупки прямо сейчас!</h2>
                 <div style="margin-top: 20px;">
-                    <a href="/auth/register.php" class="btn-primary">Зарегистрироваться</a>
-                    <a href="/auth/login.php" class="login-btn">Войти</a>
+                    <a href="register.php" class="btn-primary">Зарегистрироваться</a>
+                    <a href="login.php" class="login-btn">Войти</a>
                 </div>
             </div> 
         <?php else: ?>
             <div style="text-align: center; margin-top: 50px;">
                 <h2>Добро пожаловать, <?= htmlspecialchars($user_info['first_name'] ?? 'Пользователь') ?>!</h2>
-                <p>Ваш баланс: <?= number_format($user_info['balance'] ?? 0, 2) ?> руб.</p>
                 <div style="margin-top: 20px;">
-                    <a href="/account/" class="btn-primary">Перейти в личный кабинет</a>
+                    <a href="account.php" class="btn-primary">Перейти в личный кабинет</a>
                 </div>
             </div>
         <?php endif; ?>
         
-        <!-- Случайные товары -->
         <div style="margin: 50px 0;">
             <h2 style="text-align: center;">Рекомендуемые товары</h2>
             
@@ -65,7 +62,7 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
                             
                             <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
                             <div class="product-brand"><?= htmlspecialchars($product['brand_name'] ?? 'Бренд не указан') ?></div>
-                            <div class="product-price"><?= number_format($product['price'], 2) ?> руб.</div>
+                            <div class="product-price"><?= number_format($product['price'], 2) ?>.</div>
                             <div class="product-actions">
                                 <a href="/product.php?id=<?= $product['product_id'] ?>" class="btn-primary">Подробнее</a>
                             </div>
@@ -74,12 +71,12 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
                 </div>
                 
                 <div style="text-align: center;">
-                    <a href="/catalog.php" class="btn-primary">Весь каталог</a>
+                    <a href="catalog.php" class="btn-primary">Весь каталог</a>
                 </div>
             <?php endif; ?>
         </div>
     </main>
     
-    <?php require_once 'blocks/footer.php'; ?>
+    <?php require_once 'footer.php'; ?>
 </body>
 </html>

@@ -1,11 +1,9 @@
 RewriteEngine On
 
-# Перенаправляем все запросы на index.php если файл не существует
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Разрешаем доступ к статическим файлам
 <FilesMatch "\.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|eot|svg)$">
     Header set Cache-Control "max-age=2592000"
 </FilesMatch>
