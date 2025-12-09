@@ -8,7 +8,6 @@ $user_info = getUserInfo();
 $errors = [];
 $success = '';
 
-// 1. Получаем товары
 $stmt = $pdo->prepare("
     SELECT ci.*, p.name, p.price, p.stock 
     FROM CartItems ci 
@@ -27,10 +26,8 @@ $total_amount = 0;
 foreach ($cart_items as $item) {
     $total_amount += $item['quantity'] * $item['price'];
 }
-// Приводим к float для математики
 $total_amount = round((float)$total_amount, 2);
 
-// 2. Обработка заказа
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     $shipping_address = trim($_POST['shipping_address']);
     $payment_method = $_POST['payment_method'];
@@ -39,53 +36,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
     if (empty($errors)) {
         try {
-            // НАЧАЛО ТРАНЗАКЦИИ
             $pdo->beginTransaction();
 
-            // --- ШАГ А: БЛОКИРОВКА И СПИСАНИЕ ---
             if ($payment_method === 'balance') {
-                // 1. Блокируем строку пользователя, чтобы никто не изменил баланс параллельно
                 $stmt = $pdo->prepare("SELECT balance FROM Users WHERE user_id = ? FOR UPDATE");
                 $stmt->execute([$user_id]);
                 $current_balance = (float)$stmt->fetchColumn();
 
-                // 2. Проверяем хватает ли денег (в PHP, чтобы избежать глюков SQL типов)
                 if ($current_balance < $total_amount) {
                     throw new Exception("Недостаточно средств. Ваш баланс: " . formatPrice($current_balance));
                 }
 
-                // 3. Вычисляем новый баланс
                 $new_balance = $current_balance - $total_amount;
 
-                // 4. ЯВНО устанавливаем новый баланс
                 $stmt = $pdo->prepare("UPDATE Users SET balance = ? WHERE user_id = ?");
                 $stmt->execute([$new_balance, $user_id]);
 
-                // 5. Пишем историю
                 $stmt = $pdo->prepare("INSERT INTO BalanceTransactions (user_id, amount, type, description) VALUES (?, ?, 'purchase', ?)");
                 $stmt->execute([$user_id, -$total_amount, "Оплата заказа"]); 
             }
 
-            // --- ШАГ Б: СОЗДАНИЕ ЗАКАЗА ---
             $stmt = $pdo->prepare("INSERT INTO Orders (user_id, total_amount, shipping_address, payment_method, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
             $stmt->execute([$user_id, $total_amount, $shipping_address, $payment_method]);
             $order_id = $pdo->lastInsertId();
 
-            // Если платили балансом, добавляем ID заказа в описание транзакции
             if ($payment_method === 'balance') {
                 $pdo->prepare("UPDATE BalanceTransactions SET description = ? WHERE user_id = ? ORDER BY transaction_id DESC LIMIT 1")
                     ->execute(["Оплата заказа #$order_id", $user_id]);
             }
 
-            // --- ШАГ В: СПИСАНИЕ ТОВАРОВ ---
             $stmt_item = $pdo->prepare("INSERT INTO OrderItems (order_id, product_id, quantity, unit_price, product_name, product_brand) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt_stock = $pdo->prepare("UPDATE Products SET stock = ? WHERE product_id = ?"); // Тоже явное обновление
+            $stmt_stock = $pdo->prepare("UPDATE Products SET stock = ? WHERE product_id = ?");
             
-            // Запрос для получения стока с блокировкой
             $stmt_get_stock = $pdo->prepare("SELECT stock FROM Products WHERE product_id = ? FOR UPDATE");
 
             foreach ($cart_items as $item) {
-                // Блокируем товар
                 $stmt_get_stock->execute([$item['product_id']]);
                 $current_stock = (int)$stmt_get_stock->fetchColumn();
 
@@ -93,18 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     throw new Exception("Товар '{$item['name']}' закончился (осталось $current_stock).");
                 }
 
-                // Вставляем в заказ
                 $stmt_item->execute([$order_id, $item['product_id'], $item['quantity'], $item['price'], $item['name'], $item['brand_name'] ?? '']);
                 
-                // Обновляем склад (явное число)
                 $new_stock = $current_stock - $item['quantity'];
                 $stmt_stock->execute([$new_stock, $item['product_id']]);
             }
 
-            // --- ШАГ Г: ЧИСТКА КОРЗИНЫ ---
             $pdo->prepare("DELETE FROM CartItems WHERE user_id = ?")->execute([$user_id]);
 
-            // КОММИТ (ВСЕ СОХРАНЯЕМ)
             $pdo->commit();
             
             $_SESSION['cart_count'] = 0;
@@ -112,7 +93,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             $cart_items = []; 
 
         } catch (Exception $e) {
-            // Если ошибка - откатываем всё
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }

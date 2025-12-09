@@ -9,7 +9,6 @@ $items = [];
 $errors = [];
 $success = '';
 
-// Поиск заказа
 if ($order_id > 0) {
     $stmt = $pdo->prepare("SELECT o.*, u.first_name, u.last_name, u.email, u.phone FROM Orders o JOIN Users u ON o.user_id = u.user_id WHERE o.order_id = ?");
     $stmt->execute([$order_id]);
@@ -37,7 +36,6 @@ if ($order && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) 
                     $pdo->prepare("UPDATE Products SET stock = stock + ? WHERE product_id = ?")->execute([$item['quantity'], $item['product_id']]);
                 }
 
-                // 2. Возврат денег (АТОМАРНО)
                 if ($order['payment_method'] === 'balance') {
                     $refund_amount = number_format($order['total_amount'], 2, '.', '');
                     
@@ -47,7 +45,6 @@ if ($order && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) 
                         ->execute([$order['user_id'], $refund_amount, "Возврат за заказ #$order_id"]);
                 }
 
-                // 3. Статус
                 $pdo->prepare("UPDATE Orders SET status = 'cancelled', updated_at = NOW() WHERE order_id = ?")->execute([$order_id]);
                 
                 $pdo->commit();
@@ -63,7 +60,6 @@ if ($order && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) 
     }
 }
 
-// Товары
 if ($order) {
     $stmt = $pdo->prepare("SELECT oi.*, p.image_url, p.product_type FROM OrderItems oi LEFT JOIN Products p ON oi.product_id = p.product_id WHERE oi.order_id = ?");
     $stmt->execute([$order_id]);

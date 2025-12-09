@@ -2,7 +2,6 @@
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/functions.php';
 
-// --- ЛОГИКА ФИЛЬТРАЦИИ ---
 $product_type = $_GET['type'] ?? 'all';
 $search = trim($_GET['search'] ?? '');
 $sort = $_GET['sort'] ?? 'newest';
@@ -40,7 +39,6 @@ switch ($sort) {
     case 'rating': $order_by = "avg_rating DESC"; break;
 }
 
-// Запрос с подзапросами характеристик для ВСЕХ типов
 $sql = "
     SELECT 
         p.*, 

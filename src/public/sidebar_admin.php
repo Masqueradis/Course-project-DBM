@@ -2,7 +2,7 @@
     <h3>Админ панель</h3>
     <ul>
         <li>
-            <a href="admin.php" class="<?= ($current_page ?? '') === 'dashboard' ? 'active' : '' ?>">Дашборд</a>
+            <a href="admin.php" class="<?= ($current_page ?? '') === 'dashboard' ? 'active' : '' ?>">Статистика</a>
         </li>
         <li>
             <a href="users.php" class="<?= ($current_page ?? '') === 'users' ? 'active' : '' ?>">Пользователи</a>
@@ -21,6 +21,9 @@
         </li>
         <li>
             <a href="import.php" class="<?= ($current_page ?? '') === 'import' ? 'active' : '' ?>">Импорт</a>
+        </li>
+        <li>
+            <a href="admin_analytics.php" class="<?= ($current_page ?? '') === 'analytics' ? 'active' : '' ?>">Аналитика</a>
         </li>
         <li>
             <a href="account.php">Личный кабинет</a>

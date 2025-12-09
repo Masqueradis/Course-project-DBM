@@ -2,20 +2,15 @@
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/functions.php';
 
-// Получаем текущие выборы из URL
 $sel_cpu_id = $_GET['cpu'] ?? null;
 $sel_mobo_id = $_GET['mobo'] ?? null;
 $sel_ram_id = $_GET['ram'] ?? null;
 $sel_gpu_id = $_GET['gpu'] ?? null;
 
-// Переменные для хранения характеристик выбранных деталей (для фильтрации)
 $cpu_socket = null;
 $mobo_socket = null;
 $mobo_ram_type = null;
 
-// --- 1. ЗАГРУЗКА ДАННЫХ ---
-
-// А. Получаем список всех Процессоров
 $cpus = $pdo->query("
     SELECT p.product_id, p.name, p.price, p.image_url, s.socket, s.base_frequency 
     FROM Products p 
@@ -23,7 +18,6 @@ $cpus = $pdo->query("
     WHERE p.is_active = 1 AND p.stock > 0
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Если процессор выбран, получаем его сокет
 if ($sel_cpu_id) {
     foreach ($cpus as $c) {
         if ($c['product_id'] == $sel_cpu_id) {
@@ -33,7 +27,6 @@ if ($sel_cpu_id) {
     }
 }
 
-// Б. Получаем Материнские платы (Фильтр по сокету CPU)
 $mobo_sql = "
     SELECT p.product_id, p.name, p.price, p.image_url, s.socket, s.memory_type 
     FROM Products p 
@@ -51,7 +44,6 @@ $stmt = $pdo->prepare($mobo_sql);
 $stmt->execute($mobo_params);
 $mobos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Если плата выбрана, получаем её тип памяти
 if ($sel_mobo_id) {
     foreach ($mobos as $m) {
         if ($m['product_id'] == $sel_mobo_id) {
@@ -61,7 +53,6 @@ if ($sel_mobo_id) {
     }
 }
 
-// В. Получаем ОЗУ (Фильтр по типу памяти материнки)
 $ram_sql = "
     SELECT p.product_id, p.name, p.price, p.image_url, s.type, s.capacity, s.frequency 
     FROM Products p 
@@ -79,7 +70,6 @@ $stmt = $pdo->prepare($ram_sql);
 $stmt->execute($ram_params);
 $rams = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Г. Получаем Видеокарты (Без жесткой фильтрации пока)
 $gpus = $pdo->query("
     SELECT p.product_id, p.name, p.price, p.image_url, s.memory_size 
     FROM Products p 
@@ -88,7 +78,6 @@ $gpus = $pdo->query("
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 
-// --- 2. ОБРАБОТКА ДОБАВЛЕНИЯ В КОРЗИНУ ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_build'])) {
     if (!isLoggedIn()) {
         header("Location: /login.php");
@@ -106,7 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_build'])) {
         try {
             $pdo->beginTransaction();
             foreach ($items_to_add as $pid) {
-                // Простая логика: если есть - +1, если нет - вставка
                 $stmt = $pdo->prepare("SELECT cart_item_id, quantity FROM CartItems WHERE user_id = ? AND product_id = ?");
                 $stmt->execute([$user_id, $pid]);
                 $existing = $stmt->fetch();
@@ -119,7 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_build'])) {
             }
             $pdo->commit();
             
-            // Обновляем счетчик сессии (грубо, но работает)
             $_SESSION['cart_count'] = ($_SESSION['cart_count'] ?? 0) + count($items_to_add);
             
             header("Location: /cart.php");
@@ -131,9 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_build'])) {
     }
 }
 
-// Подсчет итоговой суммы
 $total_price = 0;
-// Функция-помощник для поиска цены
 function getPrice($list, $id) {
     foreach($list as $item) if($item['product_id'] == $id) return $item['price'];
     return 0;

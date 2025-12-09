@@ -3,53 +3,38 @@ require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/functions.php';
 redirectIfNotAdmin();
 
-// ... (Весь PHP код обработки действий оставляем без изменений) ...
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        $user_id = intval($_POST['user_id']);
-        switch ($_POST['action']) {
-            case 'change_balance':
-                $amount = floatval($_POST['amount']);
-                // Транзакция для безопасности
-                try {
-                    $pdo->beginTransaction();
-                    $stmt = $pdo->prepare("UPDATE Users SET balance = balance + ? WHERE user_id = ?");
-                    $stmt->execute([$amount, $user_id]);
-                    
-                    $stmt = $pdo->prepare("INSERT INTO BalanceTransactions (user_id, amount, type, description) VALUES (?, ?, 'deposit', 'Изменение администратором')");
-                    $stmt->execute([$user_id, $amount]);
-                    
-                    $pdo->commit();
-                } catch (Exception $e) {
-                    $pdo->rollBack();
-                }
-                break;
-            case 'change_role':
-                $role = $_POST['role'];
-                $stmt = $pdo->prepare("UPDATE Users SET role = ? WHERE user_id = ?");
-                $stmt->execute([$role, $user_id]);
-                break;
-            case 'block_user':
-                $stmt = $pdo->prepare("UPDATE Users SET is_active = 0 WHERE user_id = ?");
-                $stmt->execute([$user_id]);
-                break;
-            case 'unblock_user':
-                $stmt = $pdo->prepare("UPDATE Users SET is_active = 1 WHERE user_id = ?");
-                $stmt->execute([$user_id]);
-                break;
+// --- ЛОГИКА БЛОКИРОВКИ / РАЗБЛОКИРОВКИ ---
+if (isset($_GET['action']) && isset($_GET['id'])) {
+    $action_id = intval($_GET['id']);
+    $action = $_GET['action'];
+
+    // 1. Проверяем, кого пытаются заблокировать
+    $stmt = $pdo->prepare("SELECT role FROM Users WHERE user_id = ?");
+    $stmt->execute([$action_id]);
+    $target_role = $stmt->fetchColumn();
+
+    if ($target_role === 'admin') {
+        // ЗАЩИТА: Нельзя менять статус админа
+        $error = "Нельзя заблокировать администратора!";
+    } else {
+        if ($action === 'block') {
+            $pdo->prepare("UPDATE Users SET is_active = 0 WHERE user_id = ?")->execute([$action_id]);
+        } elseif ($action === 'unblock') {
+            $pdo->prepare("UPDATE Users SET is_active = 1 WHERE user_id = ?")->execute([$action_id]);
         }
+        header("Location: users.php");
+        exit;
     }
 }
 
-$stmt = $pdo->query("SELECT user_id, email, first_name, last_name, balance, role, is_active, created_at FROM Users ORDER BY created_at DESC");
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$users = $pdo->query("SELECT * FROM Users ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Пользователи</title>
+    <title>Управление пользователями</title>
     <link rel="stylesheet" href="/css/css.css">
 </head>
 <body>
@@ -60,68 +45,70 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php $current_page = 'users'; require_once __DIR__ . '/sidebar_admin.php'; ?>
 
             <div class="admin-main">
-                <h1>Управление пользователями</h1>
+                <h1>Пользователи</h1>
+                
+                <?php if (isset($error)): ?>
+                    <div class="alert error"><?= $error ?></div>
+                <?php endif; ?>
 
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Пользователь</th>
-                                <th>Баланс</th>
-                                <th>Роль</th>
-                                <th>Статус</th>
-                                <th>Дата</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $user): ?>
+                <div class="content-card">
+                    <div class="data-table">
+                        <table>
+                            <thead>
                                 <tr>
-                                    <td><?= $user['user_id'] ?></td>
-                                    <td>
-                                        <?= htmlspecialchars($user['email']) ?><br>
-                                        <small><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></small>
-                                    </td>
-                                    <td><?= formatPrice($user['balance']) ?></td>
-                                    <td>
-                                        <form method="post">
-                                            <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
-                                            <input type="hidden" name="action" value="change_role">
-                                            <select name="role" onchange="this.form.submit()" style="padding:5px;">
-                                                <option value="user" <?= $user['role'] === 'user' ? 'selected' : '' ?>>User</option>
-                                                <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
-                                            </select>
-                                        </form>
-                                    </td>
-                                    <td>
-                                        <span style="color: <?= $user['is_active'] ? 'green' : 'red' ?>">
-                                            <?= $user['is_active'] ? 'Активен' : 'Заблок.' ?>
-                                        </span>
-                                    </td>
-                                    <td><?= date('d.m.Y', strtotime($user['created_at'])) ?></td>
-                                    <td>
-                                        <div style="display:flex; gap:5px; flex-direction:column;">
-                                            <form method="post">
-                                                <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
-                                                <?php if ($user['is_active']): ?>
-                                                    <button type="submit" name="action" value="block_user" class="btn-small btn-danger" style="width:100%" onclick="return confirm('Блокировать?')">Блок</button>
-                                                <?php else: ?>
-                                                    <button type="submit" name="action" value="unblock_user" class="btn-small btn-success" style="width:100%">Разблок</button>
-                                                <?php endif; ?>
-                                            </form>
-                                            <form method="post" style="display:flex; gap:5px;">
-                                                <input type="hidden" name="user_id" value="<?= $user['user_id'] ?>">
-                                                <input type="hidden" name="action" value="change_balance">
-                                                <input type="number" name="amount" step="1" placeholder="$" required style="width:60px; padding:5px;">
-                                                <button type="submit" class="btn-small">OK</button>
-                                            </form>
-                                        </div>
-                                    </td>
+                                    <th>ID</th>
+                                    <th>Имя</th>
+                                    <th>Email</th>
+                                    <th>Роль</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($users as $u): ?>
+                                    <tr>
+                                        <td>#<?= $u['user_id'] ?></td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <?php if($u['avatar_url']): ?>
+                                                    <img src="<?= $u['avatar_url'] ?>" class="avatar-small">
+                                                <?php else: ?>
+                                                    <div class="avatar-placeholder-small"><?= strtoupper(substr($u['first_name'], 0, 1)) ?></div>
+                                                <?php endif; ?>
+                                                <?= htmlspecialchars($u['first_name'] . ' ' . $u['last_name']) ?>
+                                            </div>
+                                        </td>
+                                        <td><?= htmlspecialchars($u['email']) ?></td>
+                                        <td>
+                                            <?php if ($u['role'] === 'admin'): ?>
+                                                <span style="color: #0156FF; font-weight: bold;">Администратор</span>
+                                            <?php else: ?>
+                                                Покупатель
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($u['is_active']): ?>
+                                                <span style="color: green;">Активен</span>
+                                            <?php else: ?>
+                                                <span style="color: red; font-weight: bold;">Заблокирован</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($u['role'] !== 'admin' && $u['user_id'] !== $_SESSION['user_id']): ?>
+                                                <?php if ($u['is_active']): ?>
+                                                    <a href="?action=block&id=<?= $u['user_id'] ?>" class="btn-small btn-danger" onclick="return confirm('Запретить пользователю писать комментарии?')">Заблокировать</a>
+                                                <?php else: ?>
+                                                    <a href="?action=unblock&id=<?= $u['user_id'] ?>" class="btn-small btn-success">Разблокировать</a>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span style="color: #ccc; font-size: 12px;">Недоступно</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

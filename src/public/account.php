@@ -11,7 +11,6 @@ $user = getUserInfo();
 $errors = [];
 $success = '';
 
-// Обработка загрузки аватарки
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     if (!$user['is_verified']) {
         $errors[] = "Для загрузки аватарки необходимо подтвердить email адрес";
@@ -35,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
                 $stmt = $pdo->prepare("UPDATE Users SET avatar_url = ? WHERE user_id = ?");
                 $stmt->execute([$avatar_url, $user['user_id']]);
                 $success = "Аватарка успешно обновлена!";
-                $user = getUserInfo(); // Обновляем данные
+                $user = getUserInfo();
             } else {
                 $errors[] = "Ошибка при загрузке файла";
             }
@@ -59,7 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
 
         <div class="content-area">
             <h1>Мой профиль</h1>
-
+                <div style="margin-top: 20px; margin-bottom: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                <h3>Безопасность</h3>
             <?php if ($user['is_verified']): ?>
                 <div class="verification-badge verified">
                     <div class="verification-icon">✅</div>
@@ -83,7 +83,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
 
             <?php if ($success): ?> <div class="alert success"><?= $success ?></div> <?php endif; ?>
             <?php if (!empty($errors)): ?> <div class="alert error"><?= implode('<br>', $errors) ?></div> <?php endif; ?>
-
+            
+                <?php if ($user['is_2fa_enabled']): ?>
+                    <div class="alert success">
+                        ✅ Двухфакторная аутентификация включена.
+                    </div>
+                    <a href="setup_2fa.php" class="btn-small btn-danger">Настроить / Отключить 2FA</a>
+                <?php else: ?>
+                    <div class="alert info">
+                        ⚠️ Защитите свой аккаунт с помощью 2FA.
+                    </div>
+                    <a href="setup_2fa.php" class="btn-primary">Подключить 2FA</a>
+                <?php endif; ?>
+            </div>
             <div class="content-card">
                 <div class="profile-grid">
                     
@@ -100,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
                             <form method="post" enctype="multipart/form-data" style="margin-top: 15px;">
                                 <div class="file-upload-wrapper">
                                     <label for="avatar-input" class="btn-file-custom">
-                                        📷 Изменить фото
+                                        Изменить фото
                                     </label>
                                     <input type="file" name="avatar" id="avatar-input" accept="image/*" onchange="this.form.submit()">
                                 </div>

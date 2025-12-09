@@ -6,7 +6,6 @@ redirectIfNotAdmin();
 $errors = [];
 $success = '';
 
-// --- КОНФИГУРАЦИЯ (ОСТАВЛЯЕМ КАК ЕСТЬ) ---
 $specs_config = [
     'processor' => [
         'table' => 'Processors', 'title' => 'Процессор',

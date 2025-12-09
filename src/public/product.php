@@ -218,74 +218,66 @@ $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <div class="content-card">
-        <h2 class="section-title">Отзывы покупателей (<?= count($reviews) ?>)</h2>
-        
-        <?= $review_message ?>
+    <div class="content-card" style="margin-top: 30px;">
+        <h3 class="section-title">Отзывы (<?= count($reviews) ?>)</h3>
 
         <?php if (isLoggedIn()): ?>
-            <div style="background: #f9f9f9; padding: 25px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee;">
-                <h3 style="margin-top: 0; margin-bottom: 15px;">
-                    <?= $existing_review ? 'Редактировать ваш отзыв' : 'Оставить отзыв' ?>
-                </h3>
-                
-                <form method="POST">
-                    <input type="hidden" name="action" value="submit_review">
-                    
+            <?php 
+                // Получаем свежий статус пользователя из БД (на случай, если его только что забанили)
+                $currentUserCheck = $pdo->prepare("SELECT is_active FROM Users WHERE user_id = ?");
+                $currentUserCheck->execute([$_SESSION['user_id']]);
+                $isActive = $currentUserCheck->fetchColumn();
+            ?>
+
+            <?php if ($isActive): ?>
+                <form method="post" class="review-form" style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="margin-top: 0;">Оставить отзыв</h4>
                     <div class="form-group">
-                        <label>Ваша оценка:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <?php $current_rating = $existing_review['rating'] ?? 5; ?>
-                            <select name="rating" style="width: 150px; padding: 8px;">
-                                <option value="5" <?= $current_rating == 5 ? 'selected' : '' ?>>5 - Отлично</option>
-                                <option value="4" <?= $current_rating == 4 ? 'selected' : '' ?>>4 - Хорошо</option>
-                                <option value="3" <?= $current_rating == 3 ? 'selected' : '' ?>>3 - Нормально</option>
-                                <option value="2" <?= $current_rating == 2 ? 'selected' : '' ?>>2 - Плохо</option>
-                                <option value="1" <?= $current_rating == 1 ? 'selected' : '' ?>>1 - Ужасно</option>
-                            </select>
+                        <label>Ваша оценка</label>
+                        <div class="star-rating">
+                            <?php for($i=5; $i>=1; $i--): ?>
+                                <input type="radio" id="star<?= $i ?>" name="rating" value="<?= $i ?>" required>
+                                <label for="star<?= $i ?>" title="<?= $i ?> звезд">★</label>
+                            <?php endfor; ?>
                         </div>
                     </div>
-                    
                     <div class="form-group">
-                        <label>Комментарий:</label>
-                        <textarea name="comment" rows="3" required placeholder="Расскажите о плюсах и минусах..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"><?= htmlspecialchars($existing_review['comment'] ?? '') ?></textarea>
+                        <label>Комментарий</label>
+                        <textarea name="comment" rows="3" required placeholder="Поделитесь впечатлениями о товаре"></textarea>
                     </div>
-                    
-                    <button type="submit" class="btn-primary">
-                        <?= $existing_review ? 'Обновить отзыв' : 'Отправить отзыв' ?>
-                    </button>
+                    <button type="submit" name="submit_review" class="btn-primary">Отправить отзыв</button>
                 </form>
-            </div>
+            <?php else: ?>
+                <div class="alert error" style="margin-bottom: 30px;">
+                    🚫 <strong>Ваш аккаунт ограничен.</strong><br>
+                    Вы не можете оставлять комментарии и отзывы. Пожалуйста, свяжитесь с поддержкой.
+                </div>
+            <?php endif; ?>
+
         <?php else: ?>
-            <div class="alert info">
-                <a href="login.php" style="text-decoration: underline; font-weight: bold;">Войдите</a>, чтобы оставить отзыв.
+            <div class="alert info" style="margin-bottom: 30px;">
+                <a href="login.php">Войдите</a>, чтобы оставить отзыв.
             </div>
         <?php endif; ?>
 
-        <?php if (empty($reviews)): ?>
-            <p style="color: #777; font-style: italic;">Отзывов пока нет. Будьте первым!</p>
-        <?php else: ?>
-            <?php foreach ($reviews as $review): ?>
-                <div class="review-item">
-                    <div class="review-header">
-                        <div class="review-author">
-                            <?= htmlspecialchars($review['first_name']) ?>
-                            <?php if($review['is_verified_purchase']): ?>
-                                <span style="font-size: 11px; color: green; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: normal;">Купил этот товар</span>
-                            <?php endif; ?>
+        <div class="reviews-list">
+            <?php if (empty($reviews)): ?>
+                <p style="color: #777;">Отзывов пока нет. Будьте первым!</p>
+            <?php else: ?>
+                <?php foreach ($reviews as $review): ?>
+                    <div class="review-item">
+                        <div class="review-header">
+                            <span class="review-author"><?= htmlspecialchars($review['first_name'] . ' ' . $review['last_name']) ?></span>
+                            <div class="review-stars">
+                                <?= str_repeat('★', $review['rating']) . str_repeat('☆', 5 - $review['rating']) ?>
+                            </div>
                         </div>
                         <div class="review-date"><?= date('d.m.Y', strtotime($review['created_at'])) ?></div>
+                        <div class="review-text"><?= nl2br(htmlspecialchars($review['comment'])) ?></div>
                     </div>
-                    <div style="margin-bottom: 8px;">
-                        <span class="review-stars"><?= str_repeat('★', $review['rating']) ?></span>
-                        <span style="color: #e0e0e0;"><?= str_repeat('★', 5 - $review['rating']) ?></span>
-                    </div>
-                    <div class="review-text">
-                        <?= nl2br(htmlspecialchars($review['comment'])) ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
 </div>

@@ -72,7 +72,7 @@ if (!isset($user_info)) {
                             <a href="account.php">Личный кабинет</a>
                             <a href="orders.php">Мои заказы</a>
                             <?php if (isAdmin()): ?>
-                                <a href="admin.php" style="color: #d63384;">Админ панель</a>
+                                <a href="admin.php" style="color: #000;">Админ панель</a>
                             <?php endif; ?>
                             <a href="logout.php">Выйти</a>
                         </div>

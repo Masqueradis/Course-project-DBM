@@ -34,7 +34,9 @@ function getUserInfo() {
     
     try {
         if (session_status() === PHP_SESSION_NONE) session_start();
-        $stmt = $pdo->prepare("SELECT user_id, email, first_name, last_name, balance, avatar_url, is_verified, role, address, phone, created_at FROM Users WHERE user_id = ?");
+        
+        // --- ИСПРАВЛЕНИЕ: Добавлено поле is_2fa_enabled в запрос ---
+        $stmt = $pdo->prepare("SELECT user_id, email, first_name, last_name, balance, avatar_url, is_verified, role, address, phone, created_at, is_2fa_enabled FROM Users WHERE user_id = ?");
         $stmt->execute([$_SESSION['user_id']]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {

@@ -11,7 +11,6 @@ $user = getUserInfo();
 $errors = [];
 $success = '';
 
-// Пополнение баланса
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     $amount = floatval($_POST['amount']);
     
@@ -21,13 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
             
             $stmt = $pdo->prepare("UPDATE Users SET balance = balance + ? WHERE user_id = ?");
             if ($stmt->execute([$amount, $user['user_id']])) {
-                // Запись транзакции
                 $stmt = $pdo->prepare("INSERT INTO BalanceTransactions (user_id, amount, type, description) VALUES (?, ?, 'deposit', 'Пополнение баланса')");
                 $stmt->execute([$user['user_id'], $amount]);
                 
                 $pdo->commit();
                 $success = "Баланс успешно пополнен на " . formatPrice($amount);
-                $user = getUserInfo(); // Обновляем данные
+                $user = getUserInfo(); 
             } else {
                 $pdo->rollBack();
                 $errors[] = "Ошибка при пополнении баланса";
@@ -41,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
     }
 }
 
-// Получение истории транзакций
 $stmt = $pdo->prepare("SELECT * FROM BalanceTransactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
 $stmt->execute([$user['user_id']]);
 $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);

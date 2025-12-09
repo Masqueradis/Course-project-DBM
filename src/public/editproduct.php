@@ -13,7 +13,6 @@ $product_id = intval($_GET['id']);
 $errors = [];
 $success = '';
 
-// --- КОНФИГУРАЦИЯ ---
 $specs_config = [
     'processor' => ['table' => 'Processors', 'title' => 'Процессор', 'fields' => ['socket' => ['label' => 'Сокет', 'type' => 'text', 'required' => true], 'cores' => ['label' => 'Ядра', 'type' => 'number', 'required' => true], 'threads' => ['label' => 'Потоки', 'type' => 'number', 'required' => true], 'base_frequency' => ['label' => 'Частота', 'type' => 'number', 'step' => 0.01, 'required' => true], 'max_frequency' => ['label' => 'Макс. частота', 'type' => 'number', 'step' => 0.01, 'required' => false], 'cache' => ['label' => 'Кэш', 'type' => 'number', 'required' => true], 'tdp' => ['label' => 'TDP', 'type' => 'number', 'required' => true], 'includes_cooler' => ['label' => 'Кулер', 'type' => 'checkbox', 'required' => false]]],
     'videocard' => ['table' => 'Videocards', 'title' => 'Видеокарта', 'fields' => ['memory_size' => ['label' => 'Память', 'type' => 'number', 'required' => true], 'memory_type' => ['label' => 'Тип', 'type' => 'text', 'required' => true], 'gpu_frequency' => ['label' => 'Частота GPU', 'type' => 'number', 'step' => 0.01, 'required' => true], 'tdp' => ['label' => 'TDP', 'type' => 'number', 'required' => true]]],
@@ -177,14 +176,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         <div class="form-group">
                             <label>Фотография</label>
-                            <?php if($product['image_url']): ?>
-                                <div style="margin-bottom: 10px;">
-                                    <img src="<?= $product['image_url'] ?>" class="img-thumbnail" style="width: 150px; height: 150px;">
+                            
+                            <div style="margin-bottom: 15px; text-align: center; background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px dashed #ddd;">
+                                <img id="preview-img" 
+                                     src="<?= $product['image_url'] ? $product['image_url'] : '' ?>" 
+                                     alt="Предпросмотр" 
+                                     style="max-width: 100%; max-height: 250px; border-radius: 4px; display: <?= $product['image_url'] ? 'inline-block' : 'none' ?>;">
+                                     
+                                <div id="no-image-text" style="color: #999; font-size: 14px; padding: 20px; display: <?= $product['image_url'] ? 'none' : 'block' ?>;">
+                                    Нет изображения
                                 </div>
-                            <?php endif; ?>
+                            </div>
+
                             <div class="file-upload-wrapper">
-                                <label for="img-edit" class="btn-file-custom">Загрузить новое фото</label>
-                                <input type="file" name="image" id="img-edit" accept="image/*">
+                                <label for="img-edit" class="btn-file-custom" id="file-label">
+                                    <?= $product['image_url'] ? 'Заменить фото' : 'Загрузить фото' ?>
+                                </label>
+                                <input type="file" name="image" id="img-edit" accept="image/*" onchange="previewImage(this)">
                             </div>
                         </div>
 
@@ -226,6 +234,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+    <script>
+        function previewImage(input) {
+            var preview = document.getElementById('preview-img');
+            var noImageText = document.getElementById('no-image-text');
+            var label = document.getElementById('file-label');
+
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function(e) {
+                    // Устанавливаем ссылку на загруженную картинку (base64)
+                    preview.src = e.target.result;
+                    preview.style.display = 'inline-block';
+                    
+                    // Скрываем текст "Нет изображения"
+                    noImageText.style.display = 'none';
+                    
+                    // Меняем текст кнопки
+                    label.textContent = 'Выбран файл: ' + input.files[0].name;
+                    label.style.backgroundColor = '#e3efff'; // Легкая подсветка
+                    label.style.borderColor = '#0156FF';
+                }
+
+                // Читаем файл как URL данных
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+    
     <?php require_once __DIR__ . '/footer.php'; ?>
 </body>
 </html>

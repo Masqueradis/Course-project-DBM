@@ -20,19 +20,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_type'])) {
     $start_date = $_POST['start_date'] ?? '';
     $end_date = $_POST['end_date'] ?? '';
     
+    // --- ИСПРАВЛЕНИЕ: Определяем точное имя колонки даты для каждого типа ---
+    // Это решает ошибку "Column created_at is ambiguous"
+    $date_column = 'created_at'; // По умолчанию
+    
+    switch ($export_type) {
+        case 'orders':       $date_column = 'o.created_at'; break; // o = Orders
+        case 'products':     $date_column = 'p.created_at'; break; // p = Products
+        case 'users':        $date_column = 'Users.created_at'; break; // Таблица Users
+        case 'reviews':      $date_column = 'r.created_at'; break; // r = Reviews
+        case 'transactions': $date_column = 't.created_at'; break; // t = BalanceTransactions
+    }
+    
     $where = [];
     $params = [];
     
-    // Фильтр по дате
+    // Фильтр по дате (теперь используем конкретную колонку $date_column)
     if ($start_date && $end_date) {
-        $where[] = "DATE(created_at) BETWEEN ? AND ?";
+        $where[] = "DATE($date_column) BETWEEN ? AND ?";
         $params[] = $start_date;
         $params[] = $end_date;
     } elseif ($start_date) {
-        $where[] = "DATE(created_at) >= ?";
+        $where[] = "DATE($date_column) >= ?";
         $params[] = $start_date;
     } elseif ($end_date) {
-        $where[] = "DATE(created_at) <= ?";
+        $where[] = "DATE($date_column) <= ?";
         $params[] = $end_date;
     }
     
@@ -41,26 +53,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['export_type'])) {
     // SQL запросы
     switch ($export_type) {
         case 'orders':
+            // Используем алиас 'o' для Orders
             $query = "SELECT o.order_id, o.user_id, CONCAT(u.first_name, ' ', u.last_name) as customer, u.email, o.total_amount, o.status, o.payment_method, o.created_at FROM Orders o JOIN Users u ON o.user_id = u.user_id $where_sql ORDER BY o.created_at DESC";
             $filename = "orders_" . date('Y-m-d') . ".$format";
             break;
             
         case 'products':
+            // Используем алиас 'p' для Products
             $query = "SELECT p.product_id, p.product_type, p.name, p.model, p.sku, p.price, p.stock, b.name as brand_name FROM Products p LEFT JOIN Brands b ON p.brand_id = b.brand_id $where_sql ORDER BY p.created_at DESC";
             $filename = "products_" . date('Y-m-d') . ".$format";
             break;
             
         case 'users':
+            // Без алиаса, но имя таблицы указано в $date_column
             $query = "SELECT user_id, email, first_name, last_name, role, balance, is_active, created_at FROM Users $where_sql ORDER BY created_at DESC";
             $filename = "users_" . date('Y-m-d') . ".$format";
             break;
 
         case 'reviews':
+            // Используем алиас 'r' для Reviews
             $query = "SELECT r.review_id, r.rating, r.comment, p.name as product_name, r.created_at FROM Reviews r JOIN Products p ON r.product_id = p.product_id $where_sql ORDER BY r.created_at DESC";
             $filename = "reviews_" . date('Y-m-d') . ".$format";
             break;
             
         case 'transactions':
+            // Используем алиас 't' для BalanceTransactions
             $query = "SELECT t.*, u.email FROM BalanceTransactions t JOIN Users u ON t.user_id = u.user_id $where_sql ORDER BY t.created_at DESC";
             $filename = "transactions_" . date('Y-m-d') . ".$format";
             break;

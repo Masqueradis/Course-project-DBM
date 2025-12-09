@@ -1,6 +1,7 @@
 {
     "require": {
-        "phpmailer/phpmailer": "^6.8"
+        "phpmailer/phpmailer": "^6.8",
+        "sonata-project/google-authenticator": "^2.3"
     },
     "config": {
         "optimize-autoloader": true,

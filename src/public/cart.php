@@ -11,7 +11,6 @@ $user_id = $_SESSION['user_id'];
 $errors = [];
 $success = '';
 
-// --- ЛОГИКА КОРЗИНЫ ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $product_id = intval($_POST['product_id'] ?? 0);
     $redirect_url = $_SERVER['HTTP_REFERER'] ?? '/catalog.php';
@@ -22,26 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $quantity = intval($_POST['quantity'] ?? 1);
                 if ($quantity < 1) $quantity = 1;
 
-                // 1. Проверяем реальный сток товара
                 $stmt = $pdo->prepare("SELECT stock FROM Products WHERE product_id = ? AND is_active = 1");
                 $stmt->execute([$product_id]);
                 $product_stock = $stmt->fetchColumn();
 
                 if ($product_stock === false) {
-                    // Товар не найден
                     break;
                 }
 
-                // 2. Проверяем, есть ли УЖЕ этот товар в корзине
                 $stmt = $pdo->prepare("SELECT cart_item_id, quantity FROM CartItems WHERE user_id = ? AND product_id = ?");
                 $stmt->execute([$user_id, $product_id]);
                 $existing_item = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($existing_item) {
-                    // ОБНОВЛЕНИЕ: Складываем старое кол-во + новое
                     $new_qty = $existing_item['quantity'] + $quantity;
                     
-                    // Не даем добавить больше, чем есть на складе
                     if ($new_qty > $product_stock) {
                         $new_qty = $product_stock;
                     }
@@ -49,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $pdo->prepare("UPDATE CartItems SET quantity = ? WHERE cart_item_id = ?")
                         ->execute([$new_qty, $existing_item['cart_item_id']]);
                 } else {
-                    // ВСТАВКА: Если товара в корзине нет
                     if ($quantity > $product_stock) {
                         $quantity = $product_stock;
                     }
@@ -57,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         ->execute([$user_id, $product_id, $quantity]);
                 }
                 
-                // Перенаправляем назад
                 header("Location: " . $redirect_url);
                 exit;
 
@@ -83,11 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 break;
         }
     } catch (Exception $e) {
-        // Логирование ошибок
     }
 }
 
-// --- ВЫВОД КОРЗИНЫ ---
 $stmt = $pdo->prepare("
     SELECT ci.*, p.name, p.model, p.price, p.stock, p.image_url, b.name as brand_name 
     FROM CartItems ci 
