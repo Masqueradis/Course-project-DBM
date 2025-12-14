@@ -48,6 +48,6 @@ function getUserInfo() {
 function formatPrice($price) {
     // Настраиваем формат вручную здесь
     // 0 знаков после запятой, точка, пробел как разделитель тысяч
-    return number_format((float)$price, 0, '.', ' ') . ' $';
+    return number_format((float)$price, 0, '.', ' ') . ' руб.';
 }
 ?>

@@ -50,7 +50,7 @@ try {
                 </div>
                 <div class="stat-card">
                     <h3>Общий баланс</h3>
-                    <div class="stat-number"><?= number_format((float)$stats['total_balance'], 0, '.', ' ') ?> $</div>
+                    <div class="stat-number"><?= number_format((float)$stats['total_balance'], 0, '.', ' ') ?> руб.</div>
                 </div>
             </div>
         </div>

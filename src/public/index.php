@@ -62,7 +62,7 @@ $user_info = isLoggedIn() ? getUserInfo() : null;
                             
                             <div class="product-name"><?= htmlspecialchars($product['name']) ?></div>
                             <div class="product-brand"><?= htmlspecialchars($product['brand_name'] ?? 'Бренд не указан') ?></div>
-                            <div class="product-price"><?= number_format($product['price'], 2) ?>.</div>
+                            <div class="product-price"><?= number_format($product['price'], 2) ?> руб.</div>
                             <div class="product-actions">
                                 <a href="/product.php?id=<?= $product['product_id'] ?>" class="btn-primary" style="color:white;">Подробнее</a>
                             </div>
